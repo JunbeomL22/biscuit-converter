@@ -12,6 +12,7 @@ impl FlashParser {
     pub fn to_u128<T: AsRef<[u8]>>(self, input: T) -> u128 {
         let u = input.as_ref();
         let length = u.len();
+        assert!(length <= 32, "to_u128 works only for numbers up to 32 bytes");
         match length {
             (0..=4) => {
                 let chunk: u32 = unsafe { read_unaligned(u.as_ptr() as *const u32) };
@@ -31,9 +32,7 @@ impl FlashParser {
                 let lower = unsafe { read_unaligned(lower.as_ptr() as *const u128) };
                 sixteen_to_u128(upper, 16) * 10u128.pow((length - 16) as u32) + sixteen_to_u128(lower, length - 16)
             },
-            _ => {
-                panic!("to_u128 works only for numbers up to 32 bytes")
-            }
+            _ => unreachable!()
         }
     }
 
@@ -41,6 +40,7 @@ impl FlashParser {
     pub fn to_u64<T: AsRef<[u8]>>(self, input: T) -> u64 {
         let u = input.as_ref();
         let length = u.len();
+        assert!(length <= 19, "to_u64 works only for numbers up to 19 bytes");
         match length {
             (0..=4) => {
                 let chunk: u32 = unsafe { read_unaligned(u.as_ptr() as *const u32) };
@@ -60,9 +60,7 @@ impl FlashParser {
                 let lower = unsafe { read_unaligned(lower.as_ptr() as *const u128) };
                 (sixteen_to_u128(upper, 16) * 10u128.pow((length - 16) as u32) + sixteen_to_u128(lower, length - 16)) as u64
             },
-            _ => {
-                panic!("to_u64 works only for numbers up to 19 bytes")
-            }
+            _ => unreachable!()
         }
     }
 
@@ -70,6 +68,7 @@ impl FlashParser {
     pub fn to_u32<T: AsRef<[u8]>>(self, input: T) -> u32 {
         let input = input.as_ref();
         let length = input.len();
+        assert!(length <= 9, "to_u32 works only for numbers up to 9 bytes");
         match length {
             (0..=4) => {
                 let chunk: u32 = unsafe { read_unaligned(input.as_ptr() as *const u32) };
@@ -83,9 +82,7 @@ impl FlashParser {
                 let chunk: u128 = unsafe { read_unaligned(input.as_ptr() as *const u128) };
                 sixteen_to_u128(chunk, length) as u32
             },
-            _ => {
-                panic!("to_u32 works only for numbers up to 16 bytes")
-            }
+            _ => unreachable!()
         }
     }
 
@@ -93,6 +90,7 @@ impl FlashParser {
     pub fn to_u16<T: AsRef<[u8]>>(self, input: T) -> u16 {
         let input = input.as_ref();
         let length = input.len();
+        assert!(length <= 5, "to_u16 works only for numbers up to 5 bytes");
         match length {
             (0..=2) => {
                 let chunk: u16 = unsafe { read_unaligned(input.as_ptr() as *const u16) };
@@ -106,9 +104,7 @@ impl FlashParser {
                 let chunk: u64 = unsafe { read_unaligned(input.as_ptr() as *const u64) };
                 eight_to_u64(chunk, length) as u16
             },
-            _ => {
-                panic!("to_u16 works only for numbers up to 5 bytes")
-            }
+            _ => unreachable!()
         }
     }
 }

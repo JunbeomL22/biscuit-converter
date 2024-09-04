@@ -30,10 +30,10 @@ fn bench_int_conv_123456789012345(c: &mut Criterion) {
 
 fn bench_int_conv_1234567890123456789012345(c: &mut Criterion) {
     let flash = FlashParser::default();
-    let mut group = c.benchmark_group("-1234567890123456789012345");
-    group.bench_function("flashparser", |b| b.iter(|| black_box(flash.to_i128("-1234567890123456789012345"))));
-    group.bench_function("std", |b| b.iter(|| black_box("-1234567890123456789012345".parse::<i128>().unwrap())));
-    group.bench_function("atoi", |b| b.iter(|| black_box(atoi::atoi::<i128>("-1234567890123456789012345".as_bytes()).unwrap())));
+    let mut group = c.benchmark_group("-12345678901234567890123456789012");
+    group.bench_function("flashparser", |b| b.iter(|| black_box(flash.to_i128("-12345678901234567890123456789012"))));
+    group.bench_function("std", |b| b.iter(|| black_box("-12345678901234567890123456789012".parse::<i128>().unwrap())));
+    group.bench_function("atoi", |b| b.iter(|| black_box(atoi::atoi::<i128>("-12345678901234567890123456789012".as_bytes()).unwrap())));
     group.finish();
 }
 

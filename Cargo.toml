@@ -16,12 +16,25 @@ harness = false
 name = "unsigned"
 harness = false
 
+[[bench]]
+name = "tostring"
+harness = false
+
+[[bench]]
+name = "arithematics"
+harness = false
+
+[[bench]]
+name = "float"
+harness = false
 
 [dependencies]
 fast-float = "0.2"
 atoi = "2.0"
-itoa = "0.4"
+itoa = "1.0"
+dtoa = "1.0"
 criterion = "0.5"
 num-traits = "0.2"
 anyhow = "1.0"
 memchr = "2"
+ryu = "1.0"

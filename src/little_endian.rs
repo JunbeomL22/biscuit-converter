@@ -22,7 +22,7 @@ pub fn four_to_u32(mut chunk: u32, length: usize) -> u32 {
 
 #[inline(always)]
 pub fn eight_to_u64(mut chunk: u64, length: usize) -> u64 {
-    chunk <<= 64 - length * 8;
+    chunk = chunk << 64 - length * 8;
 
     let lower_digits = (chunk & 0x0f000f000f000f00) >> 8;
     let upper_digits = (chunk & 0x000f000f000f000f) * 10;
@@ -61,6 +61,27 @@ pub fn sixteen_to_u128(mut chunk: u128, length: usize) -> u128 {
     let upper_digits = (chunk & 0x000000000000000000000000ffffffff) * 100_000_000;
     chunk = lower_digits + upper_digits;
     //
+    chunk
+}
+
+#[inline(always)]
+pub fn whole_chunk_to_u128(mut chunk: u128) -> u128 {
+    let lower_digits = (chunk & 0x0f000f000f000f000f000f000f000f00) >> 8;
+    let upper_digits = (chunk & 0x000f000f000f000f000f000f000f000f) * 10;
+    chunk = lower_digits + upper_digits;
+
+    let lower_digits = (chunk & 0x00ff000000ff000000ff000000ff0000) >> 16;
+    let upper_digits = (chunk & 0x000000ff000000ff000000ff000000ff) * 100;
+    chunk = lower_digits + upper_digits;
+    
+    let lower_digits = (chunk & 0x0000ffff000000000000ffff00000000) >> 32;
+    let upper_digits = (chunk & 0x000000000000ffff000000000000ffff) * 10000;
+    chunk = lower_digits + upper_digits;
+    
+    let lower_digits = (chunk & 0x00000000ffffffff0000000000000000) >> 64;
+    let upper_digits = (chunk & 0x000000000000000000000000ffffffff) * 100_000_000;
+    chunk = lower_digits + upper_digits;
+    
     chunk
 }
 
