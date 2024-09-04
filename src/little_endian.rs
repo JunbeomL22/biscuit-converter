@@ -22,7 +22,7 @@ pub fn four_to_u32(mut chunk: u32, length: usize) -> u32 {
 
 #[inline(always)]
 pub fn eight_to_u64(mut chunk: u64, length: usize) -> u64 {
-    chunk = chunk << 64 - length * 8;
+    chunk <<= 64 - length * 8;
 
     let lower_digits = (chunk & 0x0f000f000f000f00) >> 8;
     let upper_digits = (chunk & 0x000f000f000f000f) * 10;
