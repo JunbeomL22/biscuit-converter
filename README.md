@@ -1,21 +1,8 @@
+# ***This crate has been yeanked until buggy parts are corrected***
+
 # biscuit-converter
 
-`biscuit-converter` is a high-performance numeric parser for Rust that converts ASCII numbers to their numeric representations. It uses a combination of bit operations to achieve fast parsing for integers, unsigned integers, and floating-point numbers.
-
-## Features
-
-- Fast parsing of ASCII numbers to numeric types
-- Supports parsing of integers, unsigned integers, and floating-point numbers
-- Optimized for various string lengths
-- Option to specify fraction length for further optimization
-
-## Performance
-
-- Integer parsing: Faster than `atoi`
-- Float parsing:
-  - Small-sized strings: Similar performance to `std::str::parse`
-  - Mid-sized strings: Slower than `std::str::parse` (when fraction length is not given)
-  - Large strings: Faster than `std::str::parse`
+`biscuit-converter` is a high-performance numeric parser for Rust that converts ASCII numbers to their numeric representations. It uses a combination of bit operations to achieve fast parsing for integers.
 
 ## Usage
 
@@ -32,23 +19,13 @@ Then, use it in your Rust code:
 use biscuit_converter::BiscuitConverter;
 
 fn main() {
-    // Default parser
-    let biscuit_converter = BiscuitConverter::default();
-    
-    // Parser with known fraction length
-    // This is faster than the above parser
-    let biscuit_converter_fraction_given = BiscuitConverter::initialize().with_fraction_length(2); 
-
+    let biscuit_converter = BiscuitConverter {};
     // Parsing examples
     let int_result: u64 = biscuit_converter.to_u64("123");
-    assert_eq!(int_result, 123);
+    assert_eq!(u64_result, 123);
 
-    let float_result: f64 = biscuit_converter.to_f64("123.45");
-    assert_eq!(float_result, 123.45);
-
-    // Faster parsing when fraction length is known
-    let optimized_float_result: f64 = biscuit_converter_fraction_given.to_f64("123.45");
-    assert_eq!(optimized_float_result, 123.45);
+    let i64_result: i64 = biscuit_converter.to_i64("-123");
+    assert_eq!(i64_result, 123);
 }
 ```
 
@@ -67,7 +44,7 @@ Contributions are very welcome! Whether it's bug reports, optimizations, or any 
 
 ## Benchmarks
 
-# Comprehensive Benchmark Results for biscuit-converter
+# Benchmark Results for biscuit-converter
 
 This table shows the performance of `biscuit-converter` compared to the standard library and `atoi` for parsing various types of numbers. Times are in nanoseconds, rounded to one decimal place.
 
@@ -97,37 +74,11 @@ This table shows the performance of `biscuit-converter` compared to the standard
 | -123456789012345   | 3.1     | 8.1   | 7.8   |
 | -123456789012345678| 5.9     | 11.2  | 9.1   |
 
-## Floating-Point Numbers (f64)
-
-| Input                     | biscuit | biscuit (fraction given) | std   |
-|---------------------------|---------|--------------------------|-------|
-| 1.23                      | 5.9     | 3.4                      | 6.0   |
-| 1234.56                   | 7.3     | 4.1                      | 7.0   |
-| 1234567.89                | 12.3    | 9.4                      | 8.2   |
-| 1234567890.12             | 13.1    | 9.4                      | 7.5   |
-| 1234567890123.45          | 11.9    | 9.5                      | 8.5   |
-| 1234567890123456.78       | 15.9    | 13.6                     | 10.7  |
-| 1234567890123456789.01    | 16.9    | 14.9                     | 25.2  |
-| 1234567890123456789012.34 | 18.7    | 16.5                     | 26.9  |
-| 1234567890123456789012345.67 | 18.9 | 16.5                     | 25.8  |
-| 1234567890123456789012345678.90 | 18.6 | 16.2                  | 26.9  |
-
 ## Observations:
 
-1. Integer Parsing (Unsigned and Signed):
-   - `biscuit-converter` consistently outperforms both the standard library and `atoi` for parsing integers.
-   - The performance advantage is particularly significant for smaller numbers.
-   - For larger integers (both signed and unsigned), `biscuit-converter` can be 2-3 times faster than the standard library.
-
-2. Floating-Point Numbers:
-   - For small floating-point numbers, the standard library parser is generally faster.
-   - For larger numbers (more than about 16 digits), `biscuit-converter` becomes significantly faster than the standard library.
-   - When the fraction length is known and provided to `biscuit-converter`, it consistently outperforms both the standard version of `biscuit-converter` and the standard library.
-
-3. Overall Performance:
-   - `biscuit-converter` shows its strength in parsing larger numbers across all types (unsigned, signed, and float).
-   - The performance advantage of `biscuit-converter` is most pronounced for integer parsing.
-   - For very large numbers of any type, `biscuit-converter` can provide substantial performance improvements over the standard library.
+- `biscuit-converter` consistently outperforms both the standard library and `atoi` for parsing integers.
+- The performance advantage is particularly significant for smaller numbers.
+- For larger integers (both signed and unsigned), `biscuit-converter` can be 2-3 times faster than the standard library.
 
 Note: These benchmarks were run on the specified testing environment. Results may vary depending on hardware and environmental factors. It's always recommended to run benchmarks on your target hardware for the most accurate results.
 
@@ -144,9 +95,7 @@ The `biscuit-converter` library achieves its high performance through bit manipu
    - ASCII digits range from 0x30 ("0") to 0x39 ("9").
    - The least significant 4 bits of an ASCII digit represent its numerical value.
 
-2. Little-endian representation:
-   - Numbers are stored in little-endian format in memory.
-   - String slice memory order is opposite to what we see visually.
+2. Little-endian representation is assumed
 
 3. Bit shifting:
    - When shifting bits, empty spaces are filled with zeros.

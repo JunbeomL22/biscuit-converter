@@ -32,23 +32,17 @@
 //! ```rust
 //! use biscuit_converter::BiscuitConverter;
 //!
-//! // Default parser
-//! let biscuit_converter = BiscuitConverter::default();
-//!     
-//! // Parser with known fraction length
-//! // This is faster than the above parser
-//! let biscuit_converter_fraction_given = BiscuitConverter::initialize().with_fraction_length(2); 
+//! 
+//! let biscuit_converter = BiscuitConverter {};
+//! 
 //!
 //! // Parsing examples
-//! let int_result: u64 = biscuit_converter.to_u64("123");
-//! assert_eq!(int_result, 123);
-//!
-//! let float_result: f64 = biscuit_converter.to_f64("123.45");
-//! assert_eq!(float_result, 123.45);
-//!
-//! // Faster parsing when fraction length is known
-//! let optimized_float_result: f64 = biscuit_converter_fraction_given.to_f64("123.45");
-//! assert_eq!(optimized_float_result, 123.45);
+//! let u64_result: u64 = biscuit_converter.to_u64("123");
+//! assert_eq!(u64_result, 123);
+//! 
+//! let i64_result: i64 = biscuit_converter.to_i64("-123");
+//! assert_eq!(i64_result, -123);
+//! 
 //! ```
 //!
 //! ## Benchmarks
@@ -82,37 +76,12 @@
 //! | -123456789012345   | 3.1     | 8.1   | 7.8   |
 //! | -123456789012345678| 5.9     | 11.2  | 9.1   |
 //!
-//! ### Floating-Point Numbers (f64)
-//!
-//! | Input                     | biscuit | biscuit (fraction given) | std   |
-//! |---------------------------|---------|--------------------------|-------|
-//! | 1.23                      | 5.9     | 3.4                      | 6.0   |
-//! | 1234.56                   | 7.3     | 4.1                      | 7.0   |
-//! | 1234567.89                | 12.3    | 9.4                      | 8.2   |
-//! | 1234567890.12             | 13.1    | 9.4                      | 7.5   |
-//! | 1234567890123.45          | 11.9    | 9.5                      | 8.5   |
-//! | 1234567890123456.78       | 15.9    | 13.6                     | 10.7  |
-//! | 1234567890123456789.01    | 16.9    | 14.9                     | 25.2  |
-//! | 1234567890123456789012.34 | 18.7    | 16.5                     | 26.9  |
-//! | 1234567890123456789012345.67 | 18.9 | 16.5                     | 25.8  |
-//! | 1234567890123456789012345678.90 | 18.6 | 16.2                  | 26.9  |
-//!
 //! ### Observations:
 //!
-//! 1. Integer Parsing (Unsigned and Signed):
-//!    - `biscuit-converter` consistently outperforms both the standard library and `atoi` for parsing integers.
-//!    - The performance advantage is particularly significant for smaller numbers.
-//!    - For larger integers (both signed and unsigned), `biscuit-converter` can be 2-3 times faster than the standard library.
-//!
-//! 2. Floating-Point Numbers:
-//!    - For small floating-point numbers, the standard library parser is generally faster.
-//!    - For larger numbers (more than about 16 digits), `biscuit-converter` becomes significantly faster than the standard library.
-//!    - When the fraction length is known and provided to `biscuit-converter`, it consistently outperforms both the standard version of `biscuit-converter` and the standard library.
-//!
-//! 3. Overall Performance:
-//!    - `biscuit-converter` shows its strength in parsing larger numbers across all types (unsigned, signed, and float).
-//!    - The performance advantage of `biscuit-converter` is most pronounced for integer parsing.
-//!    - For very large numbers of any type, `biscuit-converter` can provide substantial performance improvements over the standard library.
+
+//! - `biscuit-converter` consistently outperforms both the standard library and `atoi` for parsing integers.
+//! - The performance advantage is particularly significant for smaller numbers.
+//! - For larger integers (both signed and unsigned), `biscuit-converter` can be 2-3 times faster than the standard library.
 //!
 //! Note: These benchmarks were run on the specified testing environment. Results may vary depending on hardware and environmental factors.
 //! It's always recommended to run benchmarks on your target hardware for the most accurate results.
@@ -123,7 +92,7 @@
 //! Key concepts include:
 //!
 //! 1. ASCII number representation
-//! 2. Little-endian representation
+//! 2. Little-endian representation is assumed
 //! 3. Efficient bit shifting
 //!
 //! The algorithm uses various techniques for parsing different number sizes and types,
@@ -149,35 +118,15 @@
 //! open an Issue on the GitHub repository.
 pub mod unsigned;
 pub mod little_endian;
-pub mod float;
 pub mod integer;
 
 /// Parser for decimal notation
 /// It can not parse scientific notation
 #[derive(Debug, Clone, Copy, Default)]
-pub struct BiscuitConverter {
-    fraction_length: Option<usize>,
-}
+pub struct BiscuitConverter {}
 
 impl BiscuitConverter {
-    pub fn initialize() -> BiscuitConverter {
-        BiscuitConverter {
-            fraction_length: None,
-        }
-    }
-
-    pub fn new(fraction_length: usize) -> Self {
-        Self {
-            fraction_length: Some(fraction_length),
-        }
-    }
-
-    pub fn with_fraction_length(mut self, fraction_length: usize) -> Self {
-        self.fraction_length = Some(fraction_length);
-        self
-    }
-
-    pub fn set_fraction_length(&mut self, fraction_length: usize) {
-        self.fraction_length = Some(fraction_length);
+    pub fn new() -> Self {
+        BiscuitConverter {}
     }
 }
