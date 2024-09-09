@@ -6,7 +6,7 @@ authors = ["Junbeom Lee <junbeoml22@gmail.com>"]
 description = "A fast and safe numeric parser for Rust"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/JunbeomL22/biscuit-converter"
-keywords = ["parser", "parsing", "numeric-parser", "fast", "safe", "bit-operation"]
+keywords = ["parser", "numeric-parser", "fast", "safe", "bit-operation"]
 
 [[bench]]
 name = "integer"
