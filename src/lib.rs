@@ -11,13 +11,19 @@ pub struct BiscuitParser {
 }
 
 impl BiscuitParser {
+    pub fn initialize() -> BiscuitParser {
+        BiscuitParser {
+            fraction_length: None,
+        }
+    }
+
     pub fn new(fraction_length: usize) -> Self {
         Self {
             fraction_length: Some(fraction_length),
         }
     }
 
-    pub fn with_fraction_length(&mut self, fraction_length: usize) -> &mut Self {
+    pub fn with_fraction_length(mut self, fraction_length: usize) -> Self {
         self.fraction_length = Some(fraction_length);
         self
     }

@@ -25,6 +25,7 @@ fn bench_u64(c: &mut Criterion) {
         group.bench_function("biscuit", |b| b.iter(|| bis.to_u64(black_box(input))));
         group.bench_function("std", |b| b.iter(|| black_box(input_str).parse::<u64>().unwrap()));
         group.bench_function("atoi", |b| b.iter(|| atoi::<u64>(black_box(input)).unwrap()));
+        group.finish();
     }
 }
 

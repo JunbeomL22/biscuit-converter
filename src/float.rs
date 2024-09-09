@@ -8,6 +8,72 @@ use crate::little_endian::{
 use memchr::memchr;
 use std::ptr::read_unaligned;
 
+fn get_divisor_f64(exponent: usize) -> f64 {
+    if exponent == 0 {
+        1.0
+    } else if exponent == 1 {
+        0.1
+    } else if exponent == 2 {
+        0.01
+    } else if exponent == 3 {
+        0.001
+    } else if exponent == 4 {
+        0.0_001
+    } else if exponent == 5 {
+        0.00_001
+    } else if exponent == 6 {
+        0.000_001
+    } else if exponent == 7 {
+        0.0_000_001
+    } else if exponent == 8 {
+        0.00_000_001
+    } else if exponent == 9 {
+        0.000_000_001
+    } else if exponent == 10 {
+        0.0_000_000_001
+    } else if exponent == 11 {
+        0.00_000_000_001
+    } else if exponent == 12 {
+        0.000_000_000_001
+    } else if exponent == 13 {
+        0.0_000_000_000_001
+    } else if exponent == 14 {
+        0.00_000_000_000_001
+    } else if exponent == 15 {
+        0.000_000_000_000_001
+    } else if exponent == 16 {
+        0.0_000_000_000_000_001
+    } else if exponent == 17 {
+        0.00_000_000_000_000_001
+    } else if exponent == 18 {
+        0.000_000_000_000_000_001
+    } else {
+        unreachable!("get_divisor_f64 works only for exponents up to 18")
+    }
+}
+
+fn get_divisor_f32(exponent: usize) -> f32 {
+    if exponent == 0 {
+        1.0_f32
+    } else if exponent == 1 {
+        0.1_f32
+    } else if exponent == 2 {
+        0.01_f32
+    } else if exponent == 3 {
+        0.001_f32
+    } else if exponent == 4 {
+        0.0001_f32
+    } else if exponent == 5 {
+        0.00001_f32
+    } else if exponent == 6 {
+        0.000001_f32
+    } else if exponent == 7 {
+        0.0000001_f32
+    } else {
+        panic!("Exponent out of range");
+    }
+}
+
 impl BiscuitParser {
     #[inline]
     #[must_use]
@@ -21,11 +87,11 @@ impl BiscuitParser {
         };
         let exponent = if fraction_length <= 1 {0} else {fraction_length - 1};
         if length <= 4 {
-            self.float_to_i32(input, length, fraction_length) as f64 / 10i32.pow(exponent as u32) as f64
+            self.float_to_i32(input, length, fraction_length) as f64 * get_divisor_f64(exponent)
         } else if length <= 8 {
-            self.float_to_i64(input, length, fraction_length) as f64 / 10i64.pow(exponent as u32) as f64
+            self.float_to_i64(input, length, fraction_length) as f64 * get_divisor_f64(exponent)
         } else if length <= 39 {
-            self.float_to_i128(input, length, fraction_length) as f64 / 10u128.pow(exponent as u32) as f64
+            self.float_to_i128(input, length, fraction_length) as f64 * get_divisor_f64(exponent)
         } else {
             unreachable!("to_f64 works only for numbers up to 39 bytes")
         }
@@ -44,16 +110,17 @@ impl BiscuitParser {
 
         let exponent = if fraction_length <= 1 {0} else {fraction_length - 1};
         if length <= 4 {
-            self.float_to_i32(input, length, fraction_length) as f32 / 10i32.pow(exponent as u32) as f32
+            self.float_to_i32(input, length, fraction_length) as f32 * get_divisor_f32(exponent)
         } else if length <= 8 {
-            self.float_to_i64(input, length, fraction_length) as f32 / 10i64.pow(exponent as u32) as f32
+            self.float_to_i64(input, length, fraction_length) as i32 as f32 * get_divisor_f32(exponent)
         } else if length <= 39 {
-            self.float_to_i128(input, length, fraction_length) as f32 / 10u128.pow(exponent as u32) as f32
+            self.float_to_i128(input, length, fraction_length) as f32 * get_divisor_f32(exponent)
         } else {
             unreachable!("to_f32 works only for numbers up to 39 bytes")
         }
     }
 
+    #[inline]
     pub fn float_to_u128_core(&self, input: &[u8], length: usize, fraction_length: usize) -> u128 {
         match fraction_length {
             0 => {
@@ -85,21 +152,21 @@ impl BiscuitParser {
                     let point_mask = 0xffff_ffff << ((5 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    four_to_u32(chunk, length) as u128
+                    four_to_u32(chunk, 4) as u128
                 } else if length <= 8 {
                     let mut chunk: u64 = unsafe { read_unaligned(input.as_ptr() as *const u64) };
                     chunk <<= 64 - (length * 8);
                     let point_mask = 0xffff_ffff_ffff_ffff << ((9 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    eight_to_u64(chunk, length) as u128
+                    eight_to_u64(chunk, 8) as u128
                 } else if length <= 16 {
                     let mut chunk: u128 = unsafe { read_unaligned(input.as_ptr() as *const u128) };
                     chunk <<= 128 - (length * 8);  
                     let point_mask = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff << ((17 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    whole_chunk_to_u128(chunk)
+                    sixteen_to_u128(chunk, 16)
                 } else {
                     let point_location = length - fraction_length;
                     let left_point_length = if point_location > 16 { 0 } else { 16 - point_location };
@@ -190,21 +257,21 @@ impl BiscuitParser {
                     let point_mask = 0xffff_ffff << ((5 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    four_to_u32(chunk, length) as u64
+                    four_to_u32(chunk, 4) as u64
                 } else if length <= 8 {
                     let mut chunk: u64 = unsafe { read_unaligned(input.as_ptr() as *const u64) };
                     chunk <<= 64 - (length * 8);  
                     let point_mask = 0xffff_ffff_ffff_ffff << ((9 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    eight_to_u64(chunk, length)
+                    eight_to_u64(chunk, 8)
                 } else {
                     let mut chunk: u128 = unsafe { read_unaligned(input.as_ptr() as *const u128) };
                     chunk <<= 128 - (length * 8);  
                     let point_mask = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff << ((17 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    whole_chunk_to_u128(chunk) as u64
+                    sixteen_to_u128(chunk, 16) as u64
                 }
             },
         }
@@ -331,7 +398,7 @@ mod tests {
     use approx_eq::assert_approx_eq;
 
     #[test]
-    fn test_f32_4digit() {
+    fn test_f32_4digits() {
         let biscuit_parser = BiscuitParser::default();
         assert_approx_eq!(biscuit_parser.to_f32("123.") as f64, 123.0, 0.0001);
         assert_approx_eq!(biscuit_parser.to_f32("12.3") as f64, 12.3, 0.0001);
@@ -340,13 +407,32 @@ mod tests {
     }
 
     #[test]
-    fn test_f32_5digit() {
+    fn test_f32_5digits() {
         let biscuit_parser = BiscuitParser::default();
         assert_approx_eq!(biscuit_parser.to_f32("1234.") as f64, 1234.0, 0.0001);
         assert_approx_eq!(biscuit_parser.to_f32("123.4") as f64, 123.4, 0.0001);
         assert_approx_eq!(biscuit_parser.to_f32("12.34") as f64, 12.34, 0.0001);
         assert_approx_eq!(biscuit_parser.to_f32("1.234") as f64, 1.234, 0.0001);
         assert_approx_eq!(biscuit_parser.to_f32(".1234") as f64, 0.1234, 0.0001);
+    }
+
+    #[test]
+    fn test_f64_4digits() {
+        let biscuit_parser = BiscuitParser::default();
+        assert_approx_eq!(biscuit_parser.to_f64("123.") as f64, 123.0, 0.0001);
+        assert_approx_eq!(biscuit_parser.to_f64("12.3") as f64, 12.3, 0.0001);
+        assert_approx_eq!(biscuit_parser.to_f64("1.23") as f64, 1.23, 0.0001);
+        assert_approx_eq!(biscuit_parser.to_f64(".123") as f64, 0.123, 0.0001);
+    }
+
+    #[test]
+    fn test_f64_5digits() {
+        let biscuit_parser = BiscuitParser::default();
+        assert_approx_eq!(biscuit_parser.to_f64("1234.") as f64, 1234.0, 0.0001);
+        assert_approx_eq!(biscuit_parser.to_f64("123.4") as f64, 123.4, 0.0001);
+        assert_approx_eq!(biscuit_parser.to_f64("12.34") as f64, 12.34, 0.0001);
+        assert_approx_eq!(biscuit_parser.to_f64("1.234") as f64, 1.234, 0.0001);
+        assert_approx_eq!(biscuit_parser.to_f64(".1234") as f64, 0.1234, 0.0001);
     }
 
 }
