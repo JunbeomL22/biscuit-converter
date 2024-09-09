@@ -1,6 +1,6 @@
-use crate::FlashParser;
+use crate::BiscuitParser;
 
-impl FlashParser {
+impl BiscuitParser {
     #[inline(always)]
     pub fn to_i128<T: AsRef<[u8]>>(self, input: T) -> i128 {
         let u = input.as_ref();
@@ -56,7 +56,7 @@ mod tests {
 
     #[test]
     fn test_conversion() -> Result<()> {
-        let flash_parser = FlashParser::default();
+        let flash_parser = BiscuitParser::default();
         assert_eq!(flash_parser.to_i16("-1234"), -1234);
         assert_eq!(flash_parser.to_i32("-123456789"), -123456789);
         assert_eq!(flash_parser.to_i64("-123456789012345"), -123456789012345);

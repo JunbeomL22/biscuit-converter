@@ -1,47 +1,35 @@
 use criterion::{criterion_group, criterion_main, Criterion, black_box};
-use flashparser::FlashParser;
+use biscuit_parser::BiscuitParser;
+use atoi::atoi;
 
-fn bench_int_conv_1234(c: &mut Criterion) {
-    let flash = FlashParser::default();
-    let mut group = c.benchmark_group("1234");
-    group.bench_function("flashparser", |b| b.iter(|| black_box(flash.to_u16("1234"))));
-    group.bench_function("std", |b| b.iter(|| black_box("1234".parse::<u16>().unwrap())));
-    group.bench_function("atoi", |b| b.iter(|| black_box(atoi::atoi::<u16>("1234".as_bytes()).unwrap())));
-    group.finish();
-}
+fn bench_u64(c: &mut Criterion) {
+    let bis = BiscuitParser::default();
+    let test_set = vec![
+        "1", "12", "123", "1234", 
+        /*
+        "12345", "123456", "1234567", "12345678", 
+        "123456789", "1234567890", "12345678901", "123456789012", 
+        "1234567890123", "12345678901234", "123456789012345", "1234567890123456", 
+        "12345678901234567", "123456789012345678", "1234567890123456789", "12345678901234567890", 
+        "123456789012345678901", "1234567890123456789012", "12345678901234567890123", "123456789012345678901234",
+        "1234567890123456789012345", "12345678901234567890123456", 
+        "123456789012345678901234567", "1234567890123456789012345678", 
+        "12345678901234567890123456789", "123456789012345678901234567890",
+        "1234567890123456789012345678901", "12345678901234567890123456789012",
+         */
+    ];
 
-fn bench_int_conv_123456789(c: &mut Criterion) {
-    let flash = FlashParser::default();
-    let mut group = c.benchmark_group("123456789");
-    group.bench_function("flashparser", |b| b.iter(|| black_box(flash.to_u32("123456789"))));
-    group.bench_function("std", |b| b.iter(|| black_box("123456789".parse::<u32>().unwrap())));
-    group.bench_function("atoi", |b| b.iter(|| black_box(atoi::atoi::<u32>("123456789".as_bytes()).unwrap())));
-    group.finish();
-}
-
-fn bench_int_conv_123456789012345(c: &mut Criterion) {
-    let flash = FlashParser::default();
-    let mut group = c.benchmark_group("123456789012345");
-    group.bench_function("flashparser", |b| b.iter(|| black_box(flash.to_u64("123456789012345"))));
-    group.bench_function("std", |b| b.iter(|| black_box("123456789012345".parse::<u64>().unwrap())));
-    group.bench_function("atoi", |b| b.iter(|| black_box(atoi::atoi::<u64>("123456789012345".as_bytes()).unwrap())));
-    group.finish();
-}
-
-fn bench_int_conv_1234567890123456789012345(c: &mut Criterion) {
-    let flash = FlashParser::default();
-    let mut group = c.benchmark_group("12345678901234567890123456789012");
-    group.bench_function("flashparser", |b| b.iter(|| black_box(flash.to_u128("12345678901234567890123456789012"))));
-    group.bench_function("std", |b| b.iter(|| black_box("12345678901234567890123456789012".parse::<u128>().unwrap())));
-    group.bench_function("atoi", |b| b.iter(|| black_box(atoi::atoi::<u128>("12345678901234567890123456789012".as_bytes()).unwrap())));
-    group.finish();
+    for input_str in test_set {
+        let mut group = c.benchmark_group(input_str);
+        let input = input_str.as_bytes();
+        group.bench_function("biscuit", |b| b.iter(|| bis.to_u64(black_box(input))));
+        group.bench_function("std", |b| b.iter(|| black_box(input_str).parse::<u64>().unwrap()));
+        group.bench_function("atoi", |b| b.iter(|| atoi::<u64>(black_box(input)).unwrap()));
+    }
 }
 
 criterion_group!(
     benches, 
-    bench_int_conv_1234, 
-    bench_int_conv_123456789, 
-    bench_int_conv_123456789012345, 
-    bench_int_conv_1234567890123456789012345,
+    bench_u64,
 );
 criterion_main!(benches);

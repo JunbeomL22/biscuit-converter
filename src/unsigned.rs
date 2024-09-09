@@ -1,4 +1,4 @@
-use crate::FlashParser;
+use crate::BiscuitParser;
 use crate::little_endian::{
     two_to_u16,
     four_to_u32, 
@@ -7,12 +7,12 @@ use crate::little_endian::{
 };
 use std::ptr::read_unaligned;
 
-impl FlashParser {
+impl BiscuitParser {
     #[inline(always)]
     pub fn to_u128<T: AsRef<[u8]>>(self, input: T) -> u128 {
         let u = input.as_ref();
         let length = u.len();
-        assert!(length <= 32, "to_u128 works only for numbers up to 32 bytes");
+        assert!(length <= 39, "to_u128 works only for numbers up to 32 bytes");
         match length {
             (0..=4) => {
                 let chunk: u32 = unsafe { read_unaligned(u.as_ptr() as *const u32) };
@@ -31,6 +31,17 @@ impl FlashParser {
                 let upper = unsafe { read_unaligned(upper.as_ptr() as *const u128) };
                 let lower = unsafe { read_unaligned(lower.as_ptr() as *const u128) };
                 sixteen_to_u128(upper, 16) * 10u128.pow((length - 16) as u32) + sixteen_to_u128(lower, length - 16)
+            },
+            (18..=39) => {
+                let (upper, mid) = u.split_at(16);
+                let (mid, lower) = mid.split_at(16);
+                let upper = unsafe { read_unaligned(upper.as_ptr() as *const u128) };
+                let middle = unsafe { read_unaligned(mid.as_ptr() as *const u128) };
+                let lower = unsafe { read_unaligned(lower.as_ptr() as *const u128) };
+                let upper_val = sixteen_to_u128(upper, 16) * 10u128.pow((length - 32) as u32);
+                let mid_val = sixteen_to_u128(middle, 16) * 10u128.pow(16);
+                let lower_val = sixteen_to_u128(lower, length - 16);
+                upper_val + mid_val + lower_val
             },
             _ => unreachable!()
         }
@@ -116,8 +127,8 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn test_to_u64() -> Result<()>{
-        let flash_parser = FlashParser::default();
+    fn test_to_u64() -> Result<()> {
+        let flash_parser = BiscuitParser::default();
         assert_eq!(flash_parser.to_u16("1234"), 1234);
         assert_eq!(flash_parser.to_u32("12345"), 12345);
         assert_eq!(flash_parser.to_u32("1234567"), 1234567);
