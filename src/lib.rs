@@ -1,6 +1,6 @@
-//! # biscuit-parser
+//! # biscuit-converter
 //!
-//! `biscuit-parser` is a high-performance numeric parser for Rust that converts ASCII numbers to their numeric representations.
+//! `biscuit-converter` is a high-performance numeric parser for Rust that converts ASCII numbers to their numeric representations.
 //! It uses a combination of bit operations to achieve fast parsing for integers, unsigned integers, and floating-point numbers.
 //!
 //! ## Features
@@ -24,38 +24,36 @@
 //!
 //! ```toml
 //! [dependencies]
-//! biscuit-parser = "0.1"
+//! biscuit-converter = "0.1"
 //! ```
 //!
 //! Then, use it in your Rust code:
 //!
 //! ```rust
-//! use biscuit_parser::BiscuitParser;
+//! use biscuit_converter::BiscuitConverter;
 //!
-//! fn main() {
-//!     // Default parser
-//!     let biscuit_parser = BiscuitParser::default();
+//! // Default parser
+//! let biscuit_converter = BiscuitConverter::default();
 //!     
-//!     // Parser with known fraction length
-//!     // This is faster than the above parser
-//!     let biscuit_parser_fraction_given = BiscuitParser::initialize().with_fraction_length(2); 
+//! // Parser with known fraction length
+//! // This is faster than the above parser
+//! let biscuit_converter_fraction_given = BiscuitConverter::initialize().with_fraction_length(2); 
 //!
-//!     // Parsing examples
-//!     let int_result: u64 = biscuit_parser.to_u64("123");
-//!     assert_eq!(int_result, 123);
+//! // Parsing examples
+//! let int_result: u64 = biscuit_converter.to_u64("123");
+//! assert_eq!(int_result, 123);
 //!
-//!     let float_result: f64 = biscuit_parser.to_f64("123.45");
-//!     assert_eq!(float_result, 123.45);
+//! let float_result: f64 = biscuit_converter.to_f64("123.45");
+//! assert_eq!(float_result, 123.45);
 //!
-//!     // Faster parsing when fraction length is known
-//!     let optimized_float_result: f64 = biscuit_parser_fraction_given.to_f64("123.45");
-//!     assert_eq!(optimized_float_result, 123.45);
-//! }
+//! // Faster parsing when fraction length is known
+//! let optimized_float_result: f64 = biscuit_converter_fraction_given.to_f64("123.45");
+//! assert_eq!(optimized_float_result, 123.45);
 //! ```
 //!
 //! ## Benchmarks
 //!
-//! Comprehensive benchmark results for `biscuit-parser` compared to the standard library and `atoi`.
+//! Comprehensive benchmark results for `biscuit-converter` compared to the standard library and `atoi`.
 //! Times are in nanoseconds, rounded to one decimal place.
 //!
 //! **Testing Environment:**
@@ -102,26 +100,26 @@
 //! ### Observations:
 //!
 //! 1. Integer Parsing (Unsigned and Signed):
-//!    - `biscuit-parser` consistently outperforms both the standard library and `atoi` for parsing integers.
+//!    - `biscuit-converter` consistently outperforms both the standard library and `atoi` for parsing integers.
 //!    - The performance advantage is particularly significant for smaller numbers.
-//!    - For larger integers (both signed and unsigned), `biscuit-parser` can be 2-3 times faster than the standard library.
+//!    - For larger integers (both signed and unsigned), `biscuit-converter` can be 2-3 times faster than the standard library.
 //!
 //! 2. Floating-Point Numbers:
 //!    - For small floating-point numbers, the standard library parser is generally faster.
-//!    - For larger numbers (more than about 16 digits), `biscuit-parser` becomes significantly faster than the standard library.
-//!    - When the fraction length is known and provided to `biscuit-parser`, it consistently outperforms both the standard version of `biscuit-parser` and the standard library.
+//!    - For larger numbers (more than about 16 digits), `biscuit-converter` becomes significantly faster than the standard library.
+//!    - When the fraction length is known and provided to `biscuit-converter`, it consistently outperforms both the standard version of `biscuit-converter` and the standard library.
 //!
 //! 3. Overall Performance:
-//!    - `biscuit-parser` shows its strength in parsing larger numbers across all types (unsigned, signed, and float).
-//!    - The performance advantage of `biscuit-parser` is most pronounced for integer parsing.
-//!    - For very large numbers of any type, `biscuit-parser` can provide substantial performance improvements over the standard library.
+//!    - `biscuit-converter` shows its strength in parsing larger numbers across all types (unsigned, signed, and float).
+//!    - The performance advantage of `biscuit-converter` is most pronounced for integer parsing.
+//!    - For very large numbers of any type, `biscuit-converter` can provide substantial performance improvements over the standard library.
 //!
 //! Note: These benchmarks were run on the specified testing environment. Results may vary depending on hardware and environmental factors.
 //! It's always recommended to run benchmarks on your target hardware for the most accurate results.
 //!
 //! ## Algorithm Explanation
 //!
-//! The `biscuit-parser` library achieves its high performance through bit manipulation techniques.
+//! The `biscuit-converter` library achieves its high performance through bit manipulation techniques.
 //! Key concepts include:
 //!
 //! 1. ASCII number representation
@@ -139,8 +137,8 @@
 //!
 //! This project is licensed under either of
 //!
-//! - Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-//! - MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+//! - Apache License, Version 2.0, (<http://www.apache.org/licenses/LICENSE-2.0>)
+//! - MIT license (<http://opensource.org/licenses/MIT>)
 //!
 //! at your option.
 //!
@@ -157,13 +155,13 @@ pub mod integer;
 /// Parser for decimal notation
 /// It can not parse scientific notation
 #[derive(Debug, Clone, Copy, Default)]
-pub struct BiscuitParser {
+pub struct BiscuitConverter {
     fraction_length: Option<usize>,
 }
 
-impl BiscuitParser {
-    pub fn initialize() -> BiscuitParser {
-        BiscuitParser {
+impl BiscuitConverter {
+    pub fn initialize() -> BiscuitConverter {
+        BiscuitConverter {
             fraction_length: None,
         }
     }

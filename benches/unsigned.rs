@@ -1,9 +1,9 @@
 use criterion::{criterion_group, criterion_main, Criterion, black_box};
-use biscuit_parser::BiscuitParser;
+use biscuit_converter::BiscuitConverter;
 use atoi::atoi;
 
 fn bench_u64(c: &mut Criterion) {
-    let bis = BiscuitParser::default();
+    let bis = BiscuitConverter::default();
     let test_set = vec![
         "123", 
         "123456",

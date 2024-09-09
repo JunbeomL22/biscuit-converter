@@ -1,4 +1,4 @@
-use crate::BiscuitParser;
+use crate::BiscuitConverter;
 use crate::little_endian::{
     two_to_u16,
     four_to_u32, 
@@ -7,7 +7,7 @@ use crate::little_endian::{
 };
 use std::ptr::read_unaligned;
 
-impl BiscuitParser {
+impl BiscuitConverter {
     #[inline(always)]
     pub fn to_u128<T: AsRef<[u8]>>(self, input: T) -> u128 {
         let u = input.as_ref();
@@ -32,7 +32,7 @@ impl BiscuitParser {
                 let lower = unsafe { read_unaligned(lower.as_ptr() as *const u128) };
                 sixteen_to_u128(upper, 16) * 10u128.pow((length - 16) as u32) + sixteen_to_u128(lower, length - 16)
             },
-            (18..=39) => {
+            (33..=39) => {
                 let (upper, mid) = u.split_at(16);
                 let (mid, lower) = mid.split_at(16);
                 let upper = unsafe { read_unaligned(upper.as_ptr() as *const u128) };
@@ -128,13 +128,13 @@ mod tests {
 
     #[test]
     fn test_to_u64() -> Result<()> {
-        let flash_parser = BiscuitParser::default();
-        assert_eq!(flash_parser.to_u16("1234"), 1234);
-        assert_eq!(flash_parser.to_u32("12345"), 12345);
-        assert_eq!(flash_parser.to_u32("1234567"), 1234567);
-        assert_eq!(flash_parser.to_u32("123456789"), 123456789);
-        assert_eq!(flash_parser.to_u64("123456789012"), 123456789012);
-        assert_eq!(flash_parser.to_u128("123456789012345678901"), 123456789012345678901);
+        let biscuit_parser = BiscuitConverter::default();
+        assert_eq!(biscuit_parser.to_u16("1234"), 1234);
+        assert_eq!(biscuit_parser.to_u32("12345"), 12345);
+        assert_eq!(biscuit_parser.to_u32("1234567"), 1234567);
+        assert_eq!(biscuit_parser.to_u32("123456789"), 123456789);
+        assert_eq!(biscuit_parser.to_u64("123456789012"), 123456789012);
+        assert_eq!(biscuit_parser.to_u128("123456789012345678901"), 123456789012345678901);
         Ok(())
     }
 }

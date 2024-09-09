@@ -1,4 +1,4 @@
-use crate::BiscuitParser;
+use crate::BiscuitConverter;
 use crate::little_endian::{
     whole_chunk_to_u128,
     four_to_u32,
@@ -18,37 +18,37 @@ fn get_divisor_f64(exponent: usize) -> f64 {
     } else if exponent == 3 {
         0.001
     } else if exponent == 4 {
-        0.0_001
+        0.000_1
     } else if exponent == 5 {
-        0.00_001
+        0.000_01
     } else if exponent == 6 {
         0.000_001
     } else if exponent == 7 {
-        0.0_000_001
+        0.000_000_1
     } else if exponent == 8 {
-        0.00_000_001
+        0.000_000_01
     } else if exponent == 9 {
         0.000_000_001
     } else if exponent == 10 {
-        0.0_000_000_001
+        0.000_000_000_1
     } else if exponent == 11 {
-        0.00_000_000_001
+        0.000_000_000_01
     } else if exponent == 12 {
         0.000_000_000_001
     } else if exponent == 13 {
-        0.0_000_000_000_001
+        0.000_000_000_000_1
     } else if exponent == 14 {
-        0.00_000_000_000_001
+        0.000_000_000_000_01
     } else if exponent == 15 {
         0.000_000_000_000_001
     } else if exponent == 16 {
-        0.0_000_000_000_000_001
+        0.000_000_000_000_000_1
     } else if exponent == 17 {
-        0.00_000_000_000_000_001
+        0.000_000_000_000_000_01
     } else if exponent == 18 {
         0.000_000_000_000_000_001
     } else if exponent == 19 {
-        0.0_000_000_000_000_000_001
+        0.000_000_000_000_000_000_1
     } else {
         unreachable!("get_divisor_f64 works only for exponents up to 19")
     }
@@ -78,7 +78,7 @@ fn get_divisor_f32(exponent: usize) -> f32 {
     }
 }
 
-impl BiscuitParser {
+impl BiscuitConverter {
     #[inline]
     #[must_use]
     pub fn to_f64<T: AsRef<[u8]>>(&self, general_input: T) -> f64 {
@@ -361,7 +361,7 @@ impl BiscuitParser {
         if input[0] == b'-' {   
             (!self.float_to_u128_core(&input[1..], length - 1, fraction_length) as i128).wrapping_add(1)
         } else {
-            self.float_to_u128_core(&input, length, fraction_length) as i128
+            self.float_to_u128_core(input, length, fraction_length) as i128
         }
     }
 
@@ -369,9 +369,9 @@ impl BiscuitParser {
     #[must_use]
     pub fn float_to_i64(&self, input: &[u8], length: usize, fraction_length: usize) -> i64 {
         if input[0] == b'-' {
-            (!self.float_to_u64_core(&input.as_ref()[1..], length - 1, fraction_length) as i64).wrapping_add(1)
+            (!self.float_to_u64_core(&input[1..], length - 1, fraction_length) as i64).wrapping_add(1)
         } else {
-            self.float_to_u64_core(&input, length, fraction_length) as i64
+            self.float_to_u64_core(input, length, fraction_length) as i64
         }
     }
 
@@ -379,9 +379,9 @@ impl BiscuitParser {
     #[must_use]
     pub fn float_to_i32(&self, input: &[u8], length: usize, fraction_length: usize) -> i32 {
         if input[0] == b'-' {
-            (!self.float_to_u32_core(&input.as_ref()[1..], length - 1, fraction_length) as i32).wrapping_add(1)
+            (!self.float_to_u32_core(&input[1..], length - 1, fraction_length) as i32).wrapping_add(1)
         } else {
-            self.float_to_u32_core(&input, length, fraction_length) as i32
+            self.float_to_u32_core(input, length, fraction_length) as i32
         }
     }
 
@@ -389,9 +389,9 @@ impl BiscuitParser {
     #[must_use]
     pub fn float_to_i16(&self, input: &[u8], length: usize, fraction_length: usize) -> i16 {
         if input[0] == b'-' {
-            (!self.float_to_u16_core(&input.as_ref()[1..], length - 1, fraction_length - 1) as i16).wrapping_add(1)
+            (!self.float_to_u16_core(&input[1..], length - 1, fraction_length - 1) as i16).wrapping_add(1)
         } else {
-            self.float_to_u16_core(&input, length, fraction_length) as i16
+            self.float_to_u16_core(input, length, fraction_length) as i16
         }
     }
 }
@@ -403,40 +403,40 @@ mod tests {
 
     #[test]
     fn test_f32_4digits() {
-        let biscuit_parser = BiscuitParser::default();
-        assert_approx_eq!(biscuit_parser.to_f32("123.") as f64, 123.0, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f32("12.3") as f64, 12.3, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f32("1.23") as f64, 1.23, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f32(".123") as f64, 0.123, 0.0001);
+        let biscuit_converter = BiscuitConverter::default();
+        assert_approx_eq!(biscuit_converter.to_f32("123.") as f64, 123.0, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f32("12.3") as f64, 12.3, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f32("1.23") as f64, 1.23, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f32(".123") as f64, 0.123, 0.0001);
     }
 
     #[test]
     fn test_f32_5digits() {
-        let biscuit_parser = BiscuitParser::default();
-        assert_approx_eq!(biscuit_parser.to_f32("1234.") as f64, 1234.0, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f32("123.4") as f64, 123.4, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f32("12.34") as f64, 12.34, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f32("1.234") as f64, 1.234, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f32(".1234") as f64, 0.1234, 0.0001);
+        let biscuit_converter = BiscuitConverter::default();
+        assert_approx_eq!(biscuit_converter.to_f32("1234.") as f64, 1234.0, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f32("123.4") as f64, 123.4, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f32("12.34") as f64, 12.34, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f32("1.234") as f64, 1.234, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f32(".1234") as f64, 0.1234, 0.0001);
     }
 
     #[test]
     fn test_f64_4digits() {
-        let biscuit_parser = BiscuitParser::default();
-        assert_approx_eq!(biscuit_parser.to_f64("123.") as f64, 123.0, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f64("12.3") as f64, 12.3, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f64("1.23") as f64, 1.23, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f64(".123") as f64, 0.123, 0.0001);
+        let biscuit_converter = BiscuitConverter::default();
+        assert_approx_eq!(biscuit_converter.to_f64("123.") as f64, 123.0, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f64("12.3") as f64, 12.3, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f64("1.23") as f64, 1.23, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f64(".123") as f64, 0.123, 0.0001);
     }
 
     #[test]
     fn test_f64_5digits() {
-        let biscuit_parser = BiscuitParser::default();
-        assert_approx_eq!(biscuit_parser.to_f64("1234.") as f64, 1234.0, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f64("123.4") as f64, 123.4, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f64("12.34") as f64, 12.34, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f64("1.234") as f64, 1.234, 0.0001);
-        assert_approx_eq!(biscuit_parser.to_f64(".1234") as f64, 0.1234, 0.0001);
+        let biscuit_converter = BiscuitConverter::default();
+        assert_approx_eq!(biscuit_converter.to_f64("1234.") as f64, 1234.0, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f64("123.4") as f64, 123.4, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f64("12.34") as f64, 12.34, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f64("1.234") as f64, 1.234, 0.0001);
+        assert_approx_eq!(biscuit_converter.to_f64(".1234") as f64, 0.1234, 0.0001);
     }
 
 }

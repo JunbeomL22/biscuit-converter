@@ -1,11 +1,11 @@
 [package]
-name = "biscuit-parser"
+name = "biscuit-converter"
 version = "0.1.0"
 edition = "2021"
 authors = ["Junbeom Lee <junbeoml22@gmail.com>"]
 description = "A fast and safe numeric parser for Rust"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/JunbeomL22/biscuit-parser"
+repository = "https://github.com/JunbeomL22/biscuit-converter"
 keywords = ["parser", "parsing", "numeric-parser", "fast", "safe", "bit-operation"]
 
 [[bench]]
