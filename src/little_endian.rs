@@ -1,7 +1,7 @@
 #[inline(always)]
 pub fn two_to_u16(mut chunk: u16, length: usize) -> u16 {
     chunk <<= 16 - length * 8;
-    chunk & 0x0f0f + (chunk & 0xf0f0) * 10
+    ((chunk & 0x0f00) >> 8) + (chunk & 0x000f) * 10
 }
 
 #[inline(always)]

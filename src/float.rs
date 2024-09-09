@@ -47,8 +47,10 @@ fn get_divisor_f64(exponent: usize) -> f64 {
         0.00_000_000_000_000_001
     } else if exponent == 18 {
         0.000_000_000_000_000_001
+    } else if exponent == 19 {
+        0.0_000_000_000_000_000_001
     } else {
-        unreachable!("get_divisor_f64 works only for exponents up to 18")
+        unreachable!("get_divisor_f64 works only for exponents up to 19")
     }
 }
 
@@ -69,6 +71,8 @@ fn get_divisor_f32(exponent: usize) -> f32 {
         0.000001_f32
     } else if exponent == 7 {
         0.0000001_f32
+    } else if exponent == 8 {
+        0.00000001_f32
     } else {
         panic!("Exponent out of range");
     }
@@ -310,14 +314,14 @@ impl BiscuitParser {
                     let point_mask = 0xffff_ffff << ((5 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    four_to_u32(chunk, length)
+                    four_to_u32(chunk, 4) as u32
                 } else {
                     let mut chunk: u64 = unsafe { read_unaligned(input.as_ptr() as *const u64) };
                     chunk <<= 64 - (length * 8);
                     let point_mask = 0xffff_ffff_ffff_ffff << ((9 - fraction_length) * 8);
                     let decimal_mask = !point_mask;
                     chunk = (chunk & point_mask) + ((chunk & (decimal_mask >> 8)) << 8);
-                    eight_to_u64(chunk, length) as u32
+                    eight_to_u64(chunk, 8) as u32
                 } 
             },
         }
