@@ -127,9 +127,16 @@ This table shows the performance of `biscuit-converter` compared to the standard
 
 ## Observations:
 
-- `biscuit-converter` consistently outperforms both the standard library and `atoi` for parsing integers.
-- The performance advantage is particularly significant for smaller numbers.
-- For larger integers (both signed and unsigned), `biscuit-converter` can be 2-3 times faster than the standard library.
+
+1. Performance Advantage: The biscuit parser consistently outperforms both std and atoi methods across all input sizes for both i128 and i64.
+
+2. Scalability: As input size increases, biscuit's performance advantage becomes more pronounced. This is particularly evident in the i128 results.
+
+3. i128 vs i64: The performance gap between methods is generally larger for i128 parsing compared to i64, highlighting biscuit's efficiency with larger integer types.
+
+4. Consistency: Biscuit maintains relatively stable performance across different input sizes, while std and atoi show more significant increases in execution time for larger inputs.
+
+5. Large Number Efficiency: For very large numbers (e.g., 38-digit i128 integers), biscuit demonstrates remarkable efficiency, often parsing in less than 20ns compared to 50-60ns for std.
 
 Note: These benchmarks were run on the specified testing environment. Results may vary depending on hardware and environmental factors. It's always recommended to run benchmarks on your target hardware for the most accurate results.
 

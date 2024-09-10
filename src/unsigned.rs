@@ -297,13 +297,53 @@ impl BiscuitConverter {
                 let lower = sixteen_to_u128(le_bytes_to_u128(&u[16..]));
                 Some(upper.wrapping_mul(10_000_000_000_000_000).checked_add(lower)?)
             },
-            (33..=39) => {
-                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16])).wrapping_mul(exponent_u128(length - 16));
-                let mid = sixteen_to_u128(le_bytes_to_u128(&u[16..32])).wrapping_mul(exponent_u128(length - 32));
-                let lower = eight_to_u64(le_bytes_to_u64(&u[32..])) as u128;
-                
-                Some(upper.checked_add(mid)?.checked_add(lower)?)
-            }
+            33 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = sixteen_to_u128(le_bytes_to_u128(&u[16..32]));
+                let last = (u[32] - b'0') as u128;
+                Some(upper.wrapping_mul(100_000_000_000_000_000).checked_add(lower * 10)?.checked_add(last)?)
+            },
+            34 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = sixteen_to_u128(le_bytes_to_u128(&u[16..32]));
+                let mid = two_to_u16(le_bytes_to_u16(&u[32..])) as u128;
+                Some(upper.wrapping_mul(1_000_000_000_000_000_000).checked_add(lower * 100)?.checked_add(mid)?)
+            },
+            35 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = sixteen_to_u128(le_bytes_to_u128(&u[16..32]));
+                let mid = two_to_u16(le_bytes_to_u16(&u[32..34])) as u128;
+                let last = (u[34] - b'0') as u128;
+                Some(upper.wrapping_mul(10_000_000_000_000_000_000).checked_add(lower * 1_000)?.checked_add(mid * 10)?.checked_add(last)?)
+            },
+            36 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = sixteen_to_u128(le_bytes_to_u128(&u[16..32]));
+                let lower = four_to_u32(le_bytes_to_u32(&u[32..36])) as u128;
+                Some(upper.wrapping_mul(100_000_000_000_000_000_000).checked_add(mid * 10_000)?.checked_add(lower)?)
+            },
+            37 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = sixteen_to_u128(le_bytes_to_u128(&u[16..32]));
+                let lower = four_to_u32(le_bytes_to_u32(&u[32..36])) as u128;
+                let last = (u[36] - b'0') as u128;
+                Some(upper.wrapping_mul(1_000_000_000_000_000_000_000).checked_add(mid * 100_000)?.checked_add(lower * 10)?.checked_add(last)?)
+            },
+            38 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = sixteen_to_u128(le_bytes_to_u128(&u[16..32]));
+                let lower = four_to_u32(le_bytes_to_u32(&u[32..36])) as u128;
+                let tail = two_to_u16(le_bytes_to_u16(&u[36..])) as u128;
+                Some(upper.wrapping_mul(10_000_000_000_000_000_000_000).checked_add(mid * 1_000_000)?.checked_add(lower * 100)?.checked_add(tail)?)
+            },
+            39 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = sixteen_to_u128(le_bytes_to_u128(&u[16..32]));
+                let lower = four_to_u32(le_bytes_to_u32(&u[32..36])) as u128;
+                let tail = two_to_u16(le_bytes_to_u16(&u[36..38])) as u128;
+                let last = (u[38] - b'0') as u128;
+                Some(upper.wrapping_mul(100_000_000_000_000_000_000_000).checked_add(mid * 10_000_000)?.checked_add(lower * 1_000)?.checked_add(tail * 10)?.checked_add(last)?)
+            },
             _ => None
         }
     }
