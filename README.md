@@ -4,6 +4,12 @@
 
 `biscuit-converter` is a high-performance numeric parser for Rust that converts ASCII numbers to their numeric representations. It uses a combination of bit operations to achieve fast parsing for integers.
 
+## Features
+ - the return type is `Option`
+ - when MAX+1 is given,
+   if it is unsigned integer type, it gives None
+   if it is signed integer and it is in bound of unsigned type (for exmaple, u64 bound for i64 case), it gives its two's complement
+ - None case: empty string,  "-" in signed integer, numeric over the bound of unsigned
 ## Usage
 
 Add this to your `Cargo.toml`:

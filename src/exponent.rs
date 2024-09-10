@@ -46,7 +46,7 @@ pub fn exponent_u128(length: usize) -> u128 {
         }
     }
 }
-
+/*
 #[inline]
 pub fn exponent_u64(length: usize) -> u64 {
     if length <= 4 {
@@ -73,4 +73,4 @@ pub fn exponent_u64(length: usize) -> u64 {
         }
     }
 }
-
+*/

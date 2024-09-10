@@ -9,10 +9,7 @@ use crate::little_endian::{
     le_bytes_to_u64,
     le_bytes_to_u128,
 };
-use crate::exponent::{
-    exponent_u64,
-    exponent_u128,
-};
+use crate::exponent::exponent_u128;
 
 impl BiscuitConverter {
     pub fn to_u64<T: AsRef<[u8]>>(self, input: T) -> Option<u64> {
@@ -202,7 +199,7 @@ impl BiscuitConverter {
                 let tail = (u[14] - b'0') as u128;
                 Some(upper * 10_000_000 + mid * 1_000 + lower * 10 + tail)
             },
-            16 => Some(sixteen_to_u128(le_bytes_to_u128(u)) as u128),
+            16 => Some(sixteen_to_u128(le_bytes_to_u128(u))),
             17 => {
                 let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
                 let lower = (u[16] - b'0') as u128;
