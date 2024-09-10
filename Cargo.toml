@@ -8,6 +8,11 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/JunbeomL22/biscuit-converter"
 keywords = ["parser", "numeric-parser", "fast", "safe", "bit-operation"]
 
+[dev-dependencies]
+criterion = "0.5"
+atoi = "2.0"
+anyhow = "1.0"
+
 [[bench]]
 name = "integer"
 harness = false
@@ -16,8 +21,7 @@ harness = false
 name = "unsigned"
 harness = false
 
-[dependencies]
-atoi = "2.0"
-criterion = "0.5"
-num-traits = "0.2"
-anyhow = "1.0"
+[[bench]]
+name = "base"
+harness = false
+
