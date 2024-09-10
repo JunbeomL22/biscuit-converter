@@ -102,9 +102,9 @@ use biscuit_converter::BiscuitConverter;
 fn main() {
     let biscuit_converter = BiscuitConverter::default();
     // Parsing examples
-    let int_result: u64 = biscuit_converter.to_u64("123");
+    let int_result: Option<u64> = biscuit_converter.to_u64("123");
     assert_eq!(u64_result, 123);
-    let i64_result: i64 = biscuit_converter.to_i64("-123");
+    let i64_result: Option<i64> = biscuit_converter.to_i64("-123");
     assert_eq!(i64_result, 123);
 }
 ```
@@ -129,7 +129,7 @@ The `biscuit-converter` library achieves its high performance through bit manipu
    - When shifting bits, empty spaces are filled with zeros.
 
 ### Parsing Techniques
-
+***The unsafe code below is for simplicity. There is no unsafe code in the actual implementation***
 #### Single Digit Parsing
 ```rust
 let x: &[u8; 1] = b"8";

@@ -106,9 +106,9 @@
 //! fn main() {
 //!     let biscuit_converter = BiscuitConverter::default();
 //!     // Parsing examples
-//!     let int_result: u64 = biscuit_converter.to_u64("123");
+//!     let int_result: Option<u64> = biscuit_converter.to_u64("123");
 //!     assert_eq!(u64_result, 123);
-//!     let i64_result: i64 = biscuit_converter.to_i64("-123");
+//!     let i64_result: Option<i64> = biscuit_converter.to_i64("-123");
 //!     assert_eq!(i64_result, 123);
 //! }
 //! ```
