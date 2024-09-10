@@ -119,7 +119,6 @@
 pub mod unsigned;
 pub mod little_endian;
 pub mod integer;
-pub mod exponent;
 
 /// Parser for decimal notation
 /// It can not parse scientific notation
