@@ -1,64 +1,25 @@
-# ***This crate has been yeanked until buggy parts are corrected***
-
 # biscuit-converter
 
-`biscuit-converter` is a high-performance numeric parser for Rust that converts ASCII numbers to their numeric representations. It uses a combination of bit operations to achieve fast parsing for integers.
+biscuit-converter is a high-performance integer conversion library using bitwise operations. It provides safe and efficient ASCII to integer conversion.
 
-## Features
- - the return type is `Option`
- - when MAX+1 is given,
-   if it is unsigned integer type, it gives None
-   if it is signed integer and it is in bound of unsigned type (for exmaple, u64 bound for i64 case), it gives its two's complement
- - None case: empty string,  "-" in signed integer, numeric over the bound of unsigned
-## Usage
+## Key Features
 
-Add this to your `Cargo.toml`:
+- **High Performance**: Maintains consistent performance as the number of digits increases, showing exceptional speed especially for large numbers.
+- **Safety**: No unsafe code is used.
+- **Lightweight**: No external libraries are used besides the std library.
+- **Wide Integer Support**: Supports conversion for u16, u32, u64, u128, i16, i32, i64, i128.
+- **ASCII Specialized**: Only capable of converting ASCII type numbers.
 
-```toml
-[dependencies]
-biscuit-converter = "0.1"
-```
+## Performance
 
-Then, use it in your Rust code:
+biscuit-converter shows outstanding performance, particularly for large number conversions:
 
-```rust
-use biscuit_converter::BiscuitConverter;
+- For numbers with 16 or more digits, it's more than 3 times faster than atoi.
+- For numbers with 32 or more digits, it's nearly 4 times faster than atoi.
 
-fn main() {
-    let biscuit_converter = BiscuitConverter {};
-    // Parsing examples
-    let int_result: u64 = biscuit_converter.to_u64("123");
-    assert_eq!(u64_result, 123);
+Test machine: ***Ryzen 7 7700 3.8Ghz, rust 1.79***
 
-    let i64_result: i64 = biscuit_converter.to_i64("-123");
-    assert_eq!(i64_result, 123);
-}
-```
-
-## License
-
-This project is licensed under either of
-
- * Apache License, Version 2.0, (<http://www.apache.org/licenses/LICENSE-2.0>)
- * MIT license (<http://opensource.org/licenses/MIT>)
-
-at your option.
-
-## Contribution
-
-Contributions are very welcome! Whether it's bug reports, optimizations, or any other improvements, all contributions will be gratefully reviewed. Please feel free to submit a Pull Request or open an Issue on the GitHub repository.
-
-## Benchmarks
-
-# Benchmark Results for biscuit-converter
-
-This table shows the performance of `biscuit-converter` compared to the standard library and `atoi` for parsing various types of numbers. Times are in nanoseconds, rounded to one decimal place.
-
-**Testing Environment:**
-- CPU: Ryzen 7 7700 3.8 GHz
-- Rust Version: 1.79
-
-## i128
+### `i128`
 | Input                             | biscuit | std    | atoi   |
 |-----------------------------------|---------|--------|--------|
 | -1                                | 3.2 ns  | 7.1 ns | 3.4 ns |
@@ -93,17 +54,14 @@ This table shows the performance of `biscuit-converter` compared to the standard
 | -123456789012345678901234567890   | 6.1 ns  | 28.7 ns| 27.9 ns|
 | -1234567890123456789012345678901  | 6.5 ns  | 28.8 ns| 28.9 ns|
 | -12345678901234567890123456789012 | 5.9 ns  | 47.5 ns| 30.6 ns|
-| -123456789012345678901234567890123| 13.4 ns | 50.1 ns| 30.4 ns|
-| -1234567890123456789012345678901234| 13.6 ns| 51.7 ns| 31.0 ns|
-| -12345678901234567890123456789012345| 20.0 ns| 51.7 ns| 32.7 ns|
-| -123456789012345678901234567890123456| 19.9 ns| 56.3 ns| 34.7 ns|
-| -1234567890123456789012345678901234567| 20.8 ns| 58.6 ns| 33.7 ns|
-| -12345678901234567890123456789012345678| 19.9 ns| 60.5 ns| 34.7 ns|
+| -123456789012345678901234567890123| 6.7 ns | 53.9 ns| 30.9 ns|
+| -1234567890123456789012345678901234| 7.1 ns| 55.9 ns| 31.6 ns|
+| -12345678901234567890123456789012345| 7.0 ns| 53.2 ns| 31.5 ns|
+| -123456789012345678901234567890123456| 6.9 ns| 54.1 ns| 31.7 ns|
+| -1234567890123456789012345678901234567| 7.8 ns| 58.4 ns| 32.5 ns|
+| -12345678901234567890123456789012345678| 8.2 ns| 59.7 ns| 34.3 ns|
 
-
-
-## Signed Integers (i64)
-
+### `i64`
 | Input                    | biscuit | std    | atoi   |
 |--------------------------|---------|--------|--------|
 | -1                       | 1.7 ns  | 3.4 ns | 1.7 ns |
@@ -125,21 +83,33 @@ This table shows the performance of `biscuit-converter` compared to the standard
 | -123456789012345678      | 3.5 ns  | 11.0 ns| 9.1 ns |
 | -1234567890123456789     | 3.9 ns  | 11.5 ns| 10.0 ns|
 
-## Observations:
+## Features
+- The return type is `Option`
+- When MAX+1 is given:
+  - For unsigned integer types, it returns None
+  - For signed integer types, if it's within the bounds of the unsigned type (e.g., u64 bound for i64 case), it returns its two's complement
+- None cases: empty string, "-" in signed integer, numeric over the bound of unsigned
 
+## Usage
+Add this to your `Cargo.toml`:
+```toml
+[dependencies]
+biscuit-converter = "0.2"
+```
+Then, use it in your Rust code:
+```rust
+use biscuit_converter::BiscuitConverter;
+fn main() {
+    let biscuit_converter = BiscuitConverter::default();
+    // Parsing examples
+    let int_result: u64 = biscuit_converter.to_u64("123");
+    assert_eq!(u64_result, 123);
+    let i64_result: i64 = biscuit_converter.to_i64("-123");
+    assert_eq!(i64_result, 123);
+}
+```
 
-1. Performance Advantage: The biscuit parser consistently outperforms both std and atoi methods across all input sizes for both i128 and i64.
-
-2. Scalability: As input size increases, biscuit's performance advantage becomes more pronounced. This is particularly evident in the i128 results.
-
-3. i128 vs i64: The performance gap between methods is generally larger for i128 parsing compared to i64, highlighting biscuit's efficiency with larger integer types.
-
-4. Consistency: Biscuit maintains relatively stable performance across different input sizes, while std and atoi show more significant increases in execution time for larger inputs.
-
-5. Large Number Efficiency: For very large numbers (e.g., 38-digit i128 integers), biscuit demonstrates remarkable efficiency, often parsing in less than 20ns compared to 50-60ns for std.
-
-Note: These benchmarks were run on the specified testing environment. Results may vary depending on hardware and environmental factors. It's always recommended to run benchmarks on your target hardware for the most accurate results.
-
+This crate provides a fast, safe, and efficient way to convert ASCII representations of numbers to various integer types, outperforming standard library and atoi implementations, especially for larger numbers.
 ## Algorithm Explanation
 
 The `biscuit-converter` library achieves its high performance through bit manipulation techniques. The algorithm is heavily influenced by ideas from:
@@ -212,12 +182,14 @@ assert_eq!(res, -123);
 ```
 Negative numbers are handled by parsing the absolute value and then applying two's complement.
 
-### Performance Insights
+# License
+This project is licensed under either of
 
-1. **Reduced Branching**: The algorithm minimizes conditional statements, which can be costly in terms of performance.
+- Apache License, Version 2.0, <http://www.apache.org/licenses/LICENSE-2.0>
+- MIT license <http://opensource.org/licenses/MIT>
 
-2. **Avoiding Multiplication**: The algorithm replaces some multiplications with bit shifts and additions, which are generally faster operations.
+at your option.
 
-3. **Memory Efficiency**: By working directly with the byte representations, the algorithm avoids unnecessary conversions and temporary allocations.
+# Contributions
 
-These techniques allow `biscuit-converter` to achieve significant performance improvements over traditional parsing methods, especially for larger numbers and in scenarios where parsing speed is critical.
+We welcome all kinds of contributions! Whether it's bug reports, feature requests, or code contributions, your input is valuable and appreciated. Feel free to open issues or submit pull requests on our GitHub repository.
