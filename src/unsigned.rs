@@ -15,173 +15,386 @@ use crate::exponent::{
 };
 
 impl BiscuitConverter {
-    #[inline]
+    pub fn to_u64<T: AsRef<[u8]>>(self, input: T) -> Option<u64> {
+        let u = input.as_ref();
+        let length = u.len();
+        if length == 0 {
+            return None;
+        }
+        let mut start = 0;
+        while start < length && u[start] == b'0' {
+            start += 1;
+        }
+        let u = &u[start..];
+        let length = length - start;
+        assert!(length <= 20, "to_u64 works only for numbers up to 20 bytes");
+        match length {
+            0 => Some(0),
+            1 => Some((u[0] -b'0') as u64),
+            2=> Some(two_to_u16(le_bytes_to_u16(u)) as u64),
+            3 => {
+                let upper = two_to_u16(le_bytes_to_u16(&u[..2])) as u64;
+                let lower = (u[2] - b'0') as u64;
+                Some(upper * 10 + lower)
+            },
+            4 => Some(four_to_u32(le_bytes_to_u32(u)) as u64),
+            5 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4])) as u64;
+                let lower = (u[4] - b'0') as u64;
+                Some(upper * 10 + lower)
+            }
+            6 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4])) as u64;
+                let lower = two_to_u16(le_bytes_to_u16(&u[4..])) as u64;
+                Some(upper * 100 + lower)
+            },
+            7 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4])) as u64;
+                let mid = two_to_u16(le_bytes_to_u16(&u[4..6])) as u64;
+                let lower = (u[6] - b'0') as u64;
+                Some(upper * 1_000 + mid * 10 + lower)
+            },
+            8 => Some(eight_to_u64(le_bytes_to_u64(u))),
+            9 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8]));
+                let lower = (u[8] - b'0') as u64;
+                Some(upper * 10 + lower)
+            },
+            10 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8]));
+                let lower = two_to_u16(le_bytes_to_u16(&u[8..])) as u64;
+                Some(upper * 100 + lower)
+            },
+            11 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8]));
+                let mid = two_to_u16(le_bytes_to_u16(&u[8..10])) as u64;
+                let lower = (u[10] - b'0') as u64;
+                Some(upper * 1_000 + mid * 10 + lower)
+            },
+            12 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8]));
+                let lower = four_to_u32(le_bytes_to_u32(&u[8..12]));
+                Some(upper * 10_000 + lower as u64)
+            },
+            13 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8]));
+                let mid = four_to_u32(le_bytes_to_u32(&u[8..12])) as u64;
+                let lower = (u[12] - b'0') as u64;
+                Some(upper * 100_000 + mid * 10 + lower)
+            },
+            14 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8]));
+                let mid = four_to_u32(le_bytes_to_u32(&u[8..12])) as u64;
+                let lower = two_to_u16(le_bytes_to_u16(&u[12..])) as u64;
+                Some(upper * 1_000_000 + mid * 100 + lower)
+            },
+            15 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8]));
+                let mid = four_to_u32(le_bytes_to_u32(&u[8..12])) as u64;
+                let lower = two_to_u16(le_bytes_to_u16(&u[12..14])) as u64;
+                let tail = (u[14] - b'0') as u64;
+                Some(upper * 10_000_000 + mid * 1_000 + lower * 10 + tail)
+            },
+            16 => Some(sixteen_to_u128(le_bytes_to_u128(u)) as u64),
+            17 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16])) as u64;
+                let lower = (u[16] - b'0') as u64;
+                Some(upper * 10 + lower)
+            },
+            18 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16])) as u64;
+                let lower = two_to_u16(le_bytes_to_u16(&u[16..])) as u64;
+                Some(upper * 100 + lower)
+            },
+            19 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16])) as u64;
+                let mid = two_to_u16(le_bytes_to_u16(&u[16..18])) as u64;
+                let lower = (u[18] - b'0') as u64;
+                Some((upper * 1_000).checked_add(mid * 10 + lower)?)
+                        
+            }
+            20 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16])) as u64;
+                let lower = four_to_u32(le_bytes_to_u32(&u[16..])) as u64;
+                Some((upper * 10_000).checked_add(lower)?)
+            }
+            _ => None,
+        }
+    }
+
     pub fn to_u128<T: AsRef<[u8]>>(self, input: T) -> Option<u128> {
         let u = input.as_ref();
         let length = u.len();
-        assert!(length <= 39, "to_u128 works only for numbers up to 32 bytes");
+        if length == 0 {
+            return None;
+        }
+        let mut start = 0;
+        while start < length && u[start] == b'0' {
+            start += 1;
+        }
+        let u = &u[start..];
+        let length = length - start;
+        assert!(length <= 39, "to_u128 works only for numbers up to 39 bytes");
         match length {
-            (0..=3) => {
-                let mut chunk: u32 = le_bytes_to_u32(u);
-                chunk <<= 32 - length * 8;
-                Some(four_to_u32(chunk) as u128)
+            0 => Some(0),
+            1 => Some((u[0] - b'0') as u128),
+            2 => Some(two_to_u16(le_bytes_to_u16(u)) as u128),
+            3 => {
+                let upper = two_to_u16(le_bytes_to_u16(&u[..2])) as u128;
+                let lower = (u[2] - b'0') as u128;
+                Some(upper * 10 + lower)
             },
-            4 => {
-                let chunk: u32 = le_bytes_to_u32(u);
-                Some(four_to_u32(chunk) as u128)
-            }
-            (5..=7) => {
-                let mut chunk: u64 = le_bytes_to_u64(u);
-                chunk <<= 64 - length * 8;
-                Some(eight_to_u64(chunk) as u128)
+            4 => Some(four_to_u32(le_bytes_to_u32(u)) as u128),
+            5 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4])) as u128;
+                let lower = (u[4] - b'0') as u128;
+                Some(upper * 10 + lower)
             },
-            8 => {
-                let chunk: u64 = le_bytes_to_u64(u);
-                Some(eight_to_u64(chunk) as u128)
+            6 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[4..])) as u128;
+                Some(upper * 100 + lower)
             },
-            (9..=15) => {
-                let mut chunk: u128 = le_bytes_to_u128(u);
-                chunk <<= 128 - length * 8;
-                Some(sixteen_to_u128(chunk))
+            7 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4])) as u128;
+                let mid = two_to_u16(le_bytes_to_u16(&u[4..6])) as u128;
+                let lower = (u[6] - b'0') as u128;
+                Some(upper * 1_000 + mid * 10 + lower)
             },
-            16 => {
-                let chunk: u128 = le_bytes_to_u128(u);
-                Some(sixteen_to_u128(chunk))
+            8 => Some(eight_to_u64(le_bytes_to_u64(u)) as u128),
+            9 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u128;
+                let lower = (u[8] - b'0') as u128;
+                Some(upper * 10 + lower)
             },
-            (17..=31) => {
-                let (upper, lower) = u.split_at(16);
-                let upper = le_bytes_to_u128(upper);
-                let lower_length = lower.len();
-                let mut lower = le_bytes_to_u128(lower);
-                lower <<= 128 - lower_length * 8;
-                Some(sixteen_to_u128(upper) * exponent_u128(length - 16) + sixteen_to_u128(lower))
+            10 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[8..])) as u128;
+                Some(upper * 100 + lower)
+            },
+            11 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u128;
+                let mid = two_to_u16(le_bytes_to_u16(&u[8..10])) as u128;
+                let lower = (u[10] - b'0') as u128;
+                Some(upper * 1_000 + mid * 10 + lower)
+            },
+            12 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u128;
+                let lower = four_to_u32(le_bytes_to_u32(&u[8..12])) as u128;
+                Some(upper * 10_000 + lower)
+            },
+            13 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u128;
+                let mid = four_to_u32(le_bytes_to_u32(&u[8..12])) as u128;
+                let lower = (u[12] - b'0') as u128;
+                Some(upper * 100_000 + mid * 10 + lower)
+            },
+            14 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u128;
+                let mid = four_to_u32(le_bytes_to_u32(&u[8..12])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[12..])) as u128;
+                Some(upper * 1_000_000 + mid * 100 + lower)
+            },
+            15 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u128;
+                let mid = four_to_u32(le_bytes_to_u32(&u[8..12])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[12..14])) as u128;
+                let tail = (u[14] - b'0') as u128;
+                Some(upper * 10_000_000 + mid * 1_000 + lower * 10 + tail)
+            },
+            16 => Some(sixteen_to_u128(le_bytes_to_u128(u)) as u128),
+            17 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = (u[16] - b'0') as u128;
+                Some(upper * 10 + lower)
+            },
+            18 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = two_to_u16(le_bytes_to_u16(&u[16..])) as u128;
+                Some(upper * 100 + lower)
+            },
+            19 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = two_to_u16(le_bytes_to_u16(&u[16..18])) as u128;
+                let lower = (u[18] - b'0') as u128;
+                Some(upper * 1_000 + mid * 10 + lower)
+            },
+            20 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = four_to_u32(le_bytes_to_u32(&u[16..])) as u128;
+                Some(upper * 10_000 + lower)
+            },
+            21 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = four_to_u32(le_bytes_to_u32(&u[16..20])) as u128;
+                let lower = (u[20] - b'0') as u128;
+                Some(upper * 100_000 + mid * 10 + lower)
+            },
+            22 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = four_to_u32(le_bytes_to_u32(&u[16..20])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[20..])) as u128;
+                Some(upper * 1_000_000 + mid * 100 + lower)
+            },
+            23 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = four_to_u32(le_bytes_to_u32(&u[16..20])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[20..22])) as u128;
+                let tail = (u[22] - b'0') as u128;
+                Some(upper * 10_000_000 + mid * 1_000 + lower * 10 + tail)
+            },
+            24 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = eight_to_u64(le_bytes_to_u64(&u[16..])) as u128;
+                Some(upper * 100_000_000 + lower)
+            },
+            25 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = eight_to_u64(le_bytes_to_u64(&u[16..24])) as u128;
+                let lower = (u[24] - b'0') as u128;
+                Some(upper * 1_000_000_000 + mid * 10 + lower)
+            },
+            26 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = eight_to_u64(le_bytes_to_u64(&u[16..24])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[24..])) as u128;
+                Some(upper * 10_000_000_000 + mid * 100 + lower)
+            },
+            27 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = eight_to_u64(le_bytes_to_u64(&u[16..24])) as u128;
+                let lower = two_to_u16(le_bytes_to_u16(&u[24..26])) as u128;
+                let tail = (u[26] - b'0') as u128;
+                Some(upper * 100_000_000_000 + mid * 1_000 + lower * 10 + tail)
+            },
+            28 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = eight_to_u64(le_bytes_to_u64(&u[16..24])) as u128;
+                let lower = four_to_u32(le_bytes_to_u32(&u[24..28])) as u128;
+                Some(upper * 1_000_000_000_000 + mid * 10_000 + lower)
+            },
+            29 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = eight_to_u64(le_bytes_to_u64(&u[16..24])) as u128;
+                let lower = four_to_u32(le_bytes_to_u32(&u[24..28])) as u128;
+                let tail = (u[28] - b'0') as u128;
+                Some(upper * 10_000_000_000_000 + mid * 100_000 + lower * 10 + tail)
+            },
+            30 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = eight_to_u64(le_bytes_to_u64(&u[16..24])) as u128;
+                let lower = four_to_u32(le_bytes_to_u32(&u[24..28])) as u128;
+                let tail = two_to_u16(le_bytes_to_u16(&u[28..])) as u128;
+                Some(upper * 100_000_000_000_000 + mid * 1_000_000 + lower * 100 + tail)
+            },
+            31 => {
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let mid = eight_to_u64(le_bytes_to_u64(&u[16..24])) as u128;
+                let lower = four_to_u32(le_bytes_to_u32(&u[24..28])) as u128;
+                let tail = two_to_u16(le_bytes_to_u16(&u[28..30])) as u128;
+                let last = (u[30] - b'0') as u128;
+                Some(upper * 1_000_000_000_000_000 + mid * 10_000_000 + lower * 1_000 + tail * 10 + last)
             },
             32 => {
-                let (upper, lower) = u.split_at(16);
-                let upper = le_bytes_to_u128(upper);
-                let lower = le_bytes_to_u128(lower);
-                Some(sixteen_to_u128(upper) * exponent_u128(16) + sixteen_to_u128(lower))
-            }
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16]));
+                let lower = sixteen_to_u128(le_bytes_to_u128(&u[16..]));
+                Some(upper.wrapping_mul(10_000_000_000_000_000).checked_add(lower)?)
+            },
             (33..=39) => {
-                let (upper, mid) = u.split_at(16);
-                let (mid, lower) = mid.split_at(16);
-                let upper = le_bytes_to_u128(upper);
-                let mid = le_bytes_to_u128(mid);
-                let lower_length = lower.len();
-                let mut lower = le_bytes_to_u128(lower);
-                lower <<= 128 - lower_length * 8;
-                let upper_val = sixteen_to_u128(upper) * exponent_u128(length - 32);
-                let mid_val = sixteen_to_u128(mid) * 10_000_000_000_000_000;
-                let lower_val = sixteen_to_u128(lower);
-                Some(upper_val + mid_val + lower_val)
+                let upper = sixteen_to_u128(le_bytes_to_u128(&u[..16])).wrapping_mul(exponent_u128(length - 16));
+                let mid = sixteen_to_u128(le_bytes_to_u128(&u[16..32])).wrapping_mul(exponent_u128(length - 32));
+                let lower = eight_to_u64(le_bytes_to_u64(&u[32..])) as u128;
+                
+                Some(upper.checked_add(mid)?.checked_add(lower)?)
+            }
+            _ => None
+        }
+    }
+
+    pub fn to_u32<T: AsRef<[u8]>>(self, input: T) -> Option<u32> {
+        let u = input.as_ref();
+        let length = u.len();
+        if length == 0 {
+            return None;
+        }
+        let mut start = 0;
+        while start < length && u[start] == b'0' {
+            start += 1;
+        }
+        let u = &u[start..];
+        let length = length - start;
+        assert!(length <= 10, "to_u32 works only for numbers up to 10 bytes");
+        match length {
+            0 => Some(0),
+            1 => Some((u[0] - b'0') as u32),
+            2 => Some(two_to_u16(le_bytes_to_u16(u)) as u32),
+            3 => {
+                let upper = two_to_u16(le_bytes_to_u16(&u[..2])) as u32;
+                let lower = (u[2] - b'0') as u32;
+                Some(upper * 10 + lower)
+            },
+            4 => Some(four_to_u32(le_bytes_to_u32(u))),
+            5 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4]));
+                let lower = (u[4] - b'0') as u32;
+                Some(upper * 10 + lower)
+            },
+            6 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4]));
+                let lower = two_to_u16(le_bytes_to_u16(&u[4..])) as u32;
+                Some(upper * 100 + lower)
+            },
+            7 => {
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4]));
+                let mid = two_to_u16(le_bytes_to_u16(&u[4..6])) as u32;
+                let lower = (u[6] - b'0') as u32;
+                Some(upper * 1_000 + mid * 10 + lower)
+            },
+            8 => Some(eight_to_u64(le_bytes_to_u64(u)) as u32),
+            9 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u32;
+                let lower = (u[8] - b'0') as u32;
+                Some(upper.wrapping_mul(10).checked_add(lower)?)
+            },
+            10 => {
+                let upper = eight_to_u64(le_bytes_to_u64(&u[..8])) as u32;
+                let lower = two_to_u16(le_bytes_to_u16(&u[8..])) as u32;
+                Some(upper.wrapping_mul(100).checked_add(lower)?)
             },
             _ => None
         }
     }
-}
-    /*
-    #[inline(always)]
-    pub fn to_u64<T: AsRef<[u8]>>(self, input: T) -> u64 {
+
+    pub fn to_u16<T: AsRef<[u8]>>(self, input: T) -> Option<u16> {
         let u = input.as_ref();
         let length = u.len();
-        assert!(length <= 19, "to_u64 works only for numbers up to 19 bytes");
-        match length {
-            (0..=4) => {
-                let chunk: u32 = unsafe { read_unaligned(u.as_ptr() as *const u32) };
-                four_to_u32(chunk, length) as u64
-            },
-            (5..=8) => {
-                let chunk: u64 = unsafe { read_unaligned(u.as_ptr() as *const u64) };
-                eight_to_u64(chunk, length)
-            },
-            (9..=16) => {
-                let chunk: u128 = unsafe { read_unaligned(u.as_ptr() as *const u128) };
-                sixteen_to_u128(chunk, length) as u64
-            },
-            (17..=19) => {
-                let (upper, lower) = u.split_at(16);
-                let upper = unsafe { read_unaligned(upper.as_ptr() as *const u128) };
-                let lower = unsafe { read_unaligned(lower.as_ptr() as *const u128) };
-                (sixteen_to_u128(upper, 16) * 10u128.pow((length - 16) as u32) + sixteen_to_u128(lower, length - 16)) as u64
-            },
-            _ => unreachable!()
+        if length == 0 {
+            return None;
         }
-    }
-
-    #[inline(always)]
-    pub fn to_u32<T: AsRef<[u8]>>(self, input: T) -> u32 {
-        let input = input.as_ref();
-        let length = input.len();
-        assert!(length <= 9, "to_u32 works only for numbers up to 9 bytes");
-        match length {
-            (0..=4) => {
-                let chunk: u32 = unsafe { read_unaligned(input.as_ptr() as *const u32) };
-                four_to_u32(chunk, length)
-            },
-            (5..=8) => {
-                let chunk: u64 = unsafe { read_unaligned(input.as_ptr() as *const u64) };
-                eight_to_u64(chunk, length) as u32
-            },
-            9 => {
-                let chunk: u128 = unsafe { read_unaligned(input.as_ptr() as *const u128) };
-                sixteen_to_u128(chunk, length) as u32
-            },
-            _ => unreachable!()
+        let mut start = 0;
+        while start < length && u[start] == b'0' {
+            start += 1;
         }
-    }
+        let u = &u[start..];
+        let length = length - start;
+        assert!(length <= 5, "to_u32 works only for numbers up to 5 bytes");
 
-    #[inline(always)]
-    pub fn to_u16<T: AsRef<[u8]>>(self, input: T) -> u16 {
-        let input = input.as_ref();
-        let length = input.len();
-        assert!(length <= 5, "to_u16 works only for numbers up to 5 bytes");
-        match length {
-            (0..=2) => {
-                let chunk: u16 = unsafe { read_unaligned(input.as_ptr() as *const u16) };
-                two_to_u16(chunk)
+        match u.len() {
+            0 => Some(0),
+            1 => Some((u[0] - b'0') as u16),
+            2 => Some(two_to_u16(le_bytes_to_u16(u))),
+            3 => {
+                let upper = two_to_u16(le_bytes_to_u16(&u[..2]));
+                let lower = (u[2] - b'0') as u16;
+                Some(upper * 10 + lower)
             },
-            (3..=4) => {
-                let chunk: u32 = unsafe { read_unaligned(input.as_ptr() as *const u32) };
-                four_to_u32(chunk) as u16
-            },
+            4 => Some(four_to_u32(le_bytes_to_u32(u)) as u16),
             5 => {
-                let chunk: u64 = unsafe { read_unaligned(input.as_ptr() as *const u64) };
-                eight_to_u64(chunk) as u16
+                let upper = four_to_u32(le_bytes_to_u32(&u[..4])) as u16;
+                let lower = (u[4] - b'0') as u16;
+                Some(upper.wrapping_mul(10).checked_add(lower)?)
             },
-            _ => unreachable!()
+            _ => None,
         }
-    }
-}
- */
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use anyhow::Result;
-    const U128_LENGTH_BOUND: usize = 39;
-    const U64_LENGTH_BOUND: usize = 19;
-    const U32_LENGTH_BOUND: usize = 9;
-    const U16_LENGTH_BOUND: usize = 5;
-
-    #[test]
-    fn test_to_u128() -> Result<()> {
-        let biscuit = BiscuitConverter::default();
-
-        for i in 0..U128_LENGTH_BOUND {
-            let x_vec: Vec<u8> = vec![b'0'; i];
-            let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u128(x).unwrap();
-            assert_eq!(val, 0);
-        }
-
-        for i in 0..U128_LENGTH_BOUND {
-            let x_vec: Vec<u8> = vec![b'1'; i];
-            let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u128(x).unwrap();
-            assert_eq!(val, std::str::from_utf8(x)?.parse::<u128>().unwrap());
-        }
-
-
-        Ok(())
     }
 }
