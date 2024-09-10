@@ -90,4 +90,43 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_base() -> Result<()> {
+        let biscuit = BiscuitConverter::default();
+        let test_vec = vec![
+            "0",
+            "1",
+            "12",
+            "123",
+            "1234",
+            "12345",
+            "123456",
+            "1234567",
+            "12345678",
+            "123456789",
+            "1234567890",
+            "12345678901",
+            "123456789012",
+            "1234567890123",
+            "12345678901234",
+            "123456789012345",
+            "1234567890123456",
+            "12345678901234567",
+            "123456789012345678",
+            "1234567890123456789",
+        ];
+
+        for input_str in test_vec {
+            let input = input_str.as_bytes();
+            let val = biscuit.to_u64(input).unwrap();
+            assert_eq!(
+                val, input_str.parse::<u64>()?,
+                "Failed for {}", input_str
+            );
+        }
+
+        Ok(())
+    }
+
 }

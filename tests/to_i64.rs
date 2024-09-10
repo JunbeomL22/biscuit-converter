@@ -133,4 +133,42 @@ mod tests {
         assert_eq!(val_leading_zeros_neg, Some(-1234567890123456789));
         Ok(())
     }
+
+    #[test]
+    fn test_base() -> Result<()> {
+        let biscuit = BiscuitConverter::default();
+        let test_vec = vec![
+            "-0",
+            "0",
+            "-1",
+            "-12",
+            "-123",
+            "-1234",
+            "-12345",
+            "-123456",
+            "-1234567",
+            "-12345678",
+            "-123456789",
+            "-1234567890",
+            "-12345678901",
+            "-123456789012",
+            "-1234567890123",
+            "-12345678901234",
+            "-123456789012345",
+            "-1234567890123456",
+            "-12345678901234567",
+            "-123456789012345678",
+        ];
+        
+        for input_str in test_vec {
+            let input = input_str.as_bytes();
+            let val = biscuit.to_i64(input).unwrap();
+            assert_eq!(
+                val, input_str.parse::<i64>()?,
+                "Failed for {}", input_str
+            );
+        }
+
+        Ok(())
+    }
 }

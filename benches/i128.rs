@@ -46,11 +46,11 @@ fn bench_i128(c: &mut Criterion) {
     ];
 
     for input_str in test_set {
-        let mut group = c.benchmark_group(format!("u64 {}", input_str).as_str());
+        let mut group = c.benchmark_group(format!("i128 {}", input_str).as_str());
         let input = input_str.as_bytes();
-        group.bench_function("biscuit", |b| b.iter(|| bis.to_u64(black_box(input)).unwrap()));
-        group.bench_function("std", |b| b.iter(|| black_box(input_str).parse::<u64>().unwrap()));
-        group.bench_function("atoi", |b| b.iter(|| atoi::<u64>(black_box(input)).unwrap()));
+        group.bench_function("biscuit", |b| b.iter(|| bis.to_i128(black_box(input)).unwrap()));
+        group.bench_function("std", |b| b.iter(|| black_box(input_str).parse::<i128>().unwrap()));
+        group.bench_function("atoi", |b| b.iter(|| atoi::<i128>(black_box(input)).unwrap()));
         group.finish();
     }
 }
