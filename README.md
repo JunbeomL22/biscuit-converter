@@ -1,6 +1,6 @@
 # biscuit-converter
 
-biscuit-converter is a integer parser for decimal format using bitwise operations. 
+biscuit-converter is a integer parser for decimal formatted ASCII strings.
 
 ## Performance
 
