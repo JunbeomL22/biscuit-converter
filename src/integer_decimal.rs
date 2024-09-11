@@ -85,7 +85,7 @@ mod tests {
         let biscuit_parser = BiscuitConverter::default();
         assert_eq!(biscuit_parser.to_i16_decimal("-1234"), Ok(-1234));
         assert_eq!(biscuit_parser.to_i32_decimal("-123456789"), Ok(-123456789));
-        //assert_eq!(biscuit_parser.to_i64_decimal("-123456789012345"), Ok(-123456789012345));
+        assert_eq!(biscuit_parser.to_i64_decimal("-123456789012345"), Ok(-123456789012345));
         assert_eq!(biscuit_parser.to_i128_decimal("-1234567890123456789012345").unwrap(), -1234567890123456789012345);
         
         Ok(())

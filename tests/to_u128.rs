@@ -51,7 +51,8 @@ mod tests {
     #[test]
     fn test_u128_max_check() -> Result<()> {
         let biscuit = BiscuitConverter::default();
-        let byte_test = b"340282366920938463463374607431768211455";
+        let byte_test = u128::MAX.to_string();
+        let byte_test = byte_test.as_bytes();
         let x: &[u8] = &byte_test[..];
         let val = biscuit.to_u128_decimal(x).unwrap();
         assert_eq!(val, u128::MAX);

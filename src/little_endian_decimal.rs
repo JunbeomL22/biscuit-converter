@@ -117,7 +117,7 @@ pub fn check_decimal(input: &[u8]) -> bool {
 #[inline]
 #[must_use]
 pub fn check_decimal_bit_u8(chunk: u8) -> bool {
-    (0x30..0x39).contains(&chunk)
+    (0x30..=0x39).contains(&chunk)
 }
 
 const ZERO_COMPLEMENT_U16: u16 = 0x00CF;

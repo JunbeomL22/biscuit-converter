@@ -64,17 +64,22 @@ impl BiscuitConverter {
             }
             result = sixteen_to_u128(chunk_u128) * exponent_u128(length - 16);
             
+            length -= 16;
+            if length > 0 {
+                lower = &u[16..];
+            }
+
             // Process next 16 bytes
-            let upper = &u[16..32];
+            let upper = &lower[..16];
             let chunk_u128 = le_bytes_to_u128(upper);
             if !check_decimal_bit_u128(chunk_u128) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            result += sixteen_to_u128(chunk_u128) * exponent_u128(length - 32);
+            result += sixteen_to_u128(chunk_u128) * exponent_u128(length - 16);
             
-            length -= 32;
+            length -= 16;
             if length > 0 {
-                lower = &u[32..];
+                lower = &u[16..];
             }
         } 
         
@@ -109,7 +114,8 @@ impl BiscuitConverter {
             if !check_decimal_bit_u32(chunk_u32) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            result += four_to_u32(chunk_u32) as u128 * exponent_u128(length - 4);
+            result = result.wrapping_add(four_to_u32(chunk_u32) as u128).wrapping_mul(exponent_u128(length - 4));
+            dbg!(result);
             length -= 4;
             if length > 0 {
                 lower = &lower[4..];
@@ -121,11 +127,7 @@ impl BiscuitConverter {
             if !check_decimal_bit_u16(chunk_u16) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            if let Some(res) = result.checked_add((two_to_u16_decimal(chunk_u16) as u128).wrapping_mul(exponent_u128(length - 2))) {
-                result = res;
-            } else {
-                return Err(CheckError::AdditionOverflow(AdditionOverflow));
-            }
+            result = result.wrapping_add(two_to_u16_decimal(chunk_u16) as u128).wrapping_mul(exponent_u128(length - 2));
             length -= 2;
             if length > 0 {
                 lower = &lower[2..];
@@ -223,11 +225,9 @@ impl BiscuitConverter {
             if !check_decimal_bit_u16(chunk_u16) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            if let Some(res) = result.checked_add(two_to_u16_decimal(chunk_u16) as u64 * exponent_u64(length - 2)) {
-                result = res;
-            } else {
-                return Err(CheckError::AdditionOverflow(AdditionOverflow));
-            }
+            
+            result += two_to_u16_decimal(chunk_u16) as u64 * exponent_u64(length - 2);
+
             length -= 2;
             if length > 0 {
                 lower = &lower[2..];
@@ -239,11 +239,8 @@ impl BiscuitConverter {
             if !check_decimal_bit_u8(upper[0]) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            if let Some(res) = result.checked_add(one_to_u8(upper[0]) as u64) {
-                result = res;
-            } else {
-                return Err(CheckError::AdditionOverflow(AdditionOverflow));
-            }
+            
+            result += one_to_u8(upper[0]) as u64;
         } 
     
         Ok(result)
@@ -285,7 +282,7 @@ impl BiscuitConverter {
             }
             3 => {
                 let upper = le_bytes_to_u16(&u[..2]);
-                if !(check_decimal_bit_u16(upper) && check_decimal_bit_u8(u[2])) {
+                if !check_decimal_bit_u16(upper) || !check_decimal_bit_u8(u[2]) {
                     Err(CheckError::NonDecimal(NonDecimal))
                 } else {
                     let upper = two_to_u16_decimal(upper) as u32;
@@ -303,7 +300,7 @@ impl BiscuitConverter {
             }
             5 => {
                 let upper = le_bytes_to_u32(&u[..4]);
-                if !(check_decimal_bit_u32(upper) && check_decimal_bit_u8(u[4])) {
+                if !check_decimal_bit_u32(upper) || !check_decimal_bit_u8(u[4]) {
                     Err(CheckError::NonDecimal(NonDecimal))
                 } else {
                     let upper = four_to_u32(upper);
