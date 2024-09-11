@@ -36,4 +36,8 @@ harness = false
 name = "u64"
 harness = false
 
+[[bench]]
+name = "u128"
+harness = false
+
 
