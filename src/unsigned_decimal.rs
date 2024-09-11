@@ -40,19 +40,24 @@ impl BiscuitConverter {
             start += 1;
         }
         let u = &u[start..];
-        length = length - start;
+        length -= start;
         
+        
+        if length == 0 {
+            // it has been checked that the length is not zero
+            return Ok(0);
+        }
+
         if length > 39 {
             return Err(CheckError::OverFlow(OverFlow));
         }
         
         let mut result: u128 = 0;
-        let mut upper = u;
         let mut lower = u;
-        
+
         if length >= 32 {
             // Process first 16 bytes
-            upper = &u[..16];
+            let upper = &u[..16];
             let chunk_u128 = le_bytes_to_u128(upper);
             if !check_decimal_bit_u128(chunk_u128) {
                 return Err(CheckError::NonDecimal(NonDecimal));
@@ -60,23 +65,21 @@ impl BiscuitConverter {
             result = sixteen_to_u128(chunk_u128) * exponent_u128(length - 16);
             
             // Process next 16 bytes
-            upper = &u[16..32];
+            let upper = &u[16..32];
             let chunk_u128 = le_bytes_to_u128(upper);
             if !check_decimal_bit_u128(chunk_u128) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            if let Some(res) = result.checked_add(sixteen_to_u128(chunk_u128) * exponent_u128(length - 32)) {
-                result = res;
-            } else {
-                return Err(CheckError::AdditionOverflow(AdditionOverflow));
-            }
+            result += sixteen_to_u128(chunk_u128) * exponent_u128(length - 32);
             
             length -= 32;
             if length > 0 {
                 lower = &u[32..];
             }
-        } else if length >= 16 {
-            upper = &lower[..16];
+        } 
+        
+        if length >= 16 {
+            let upper = &lower[..16];
             let chunk_u128 = le_bytes_to_u128(upper);
             if !check_decimal_bit_u128(chunk_u128) {
                 return Err(CheckError::NonDecimal(NonDecimal));
@@ -86,8 +89,10 @@ impl BiscuitConverter {
             if length > 0 {
                 lower = &lower[16..];
             }
-        } else if length >= 8 {
-            upper = &lower[..8];
+        } 
+
+        if length >= 8 {
+            let upper = &lower[..8];
             let chunk_u64 = le_bytes_to_u64(upper);
             if !check_decimal_bit_u64(chunk_u64) {
                 return Err(CheckError::NonDecimal(NonDecimal));
@@ -97,24 +102,26 @@ impl BiscuitConverter {
             if length > 0 {
                 lower = &lower[8..];
             }
-        } else if length >= 4 {
-            upper = &lower[..4];
+        } 
+        if length >= 4 {
+            let upper = &lower[..4];
             let chunk_u32 = le_bytes_to_u32(upper);
             if !check_decimal_bit_u32(chunk_u32) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            result += (four_to_u32(chunk_u32) as u128) * exponent_u128(length - 4);
+            result += four_to_u32(chunk_u32) as u128 * exponent_u128(length - 4);
             length -= 4;
             if length > 0 {
                 lower = &lower[4..];
             }
-        } else if length >= 2 {
-            upper = &upper[..2];
+        } 
+        if length >= 2 {
+            let upper = &lower[..2];
             let chunk_u16 = le_bytes_to_u16(upper);
             if !check_decimal_bit_u16(chunk_u16) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            if let Some(res) = result.checked_add(two_to_u16_decimal(chunk_u16) as u128 * exponent_u128(length - 2)) {
+            if let Some(res) = result.checked_add((two_to_u16_decimal(chunk_u16) as u128).wrapping_mul(exponent_u128(length - 2))) {
                 result = res;
             } else {
                 return Err(CheckError::AdditionOverflow(AdditionOverflow));
@@ -123,8 +130,9 @@ impl BiscuitConverter {
             if length > 0 {
                 lower = &lower[2..];
             }
-        } else if length == 1 {
-            upper = &lower[..1];
+        } 
+        if length == 1 {
+            let upper = &lower[..1];
             if !check_decimal_bit_u8(upper[0]) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
@@ -133,10 +141,7 @@ impl BiscuitConverter {
             } else {
                 return Err(CheckError::AdditionOverflow(AdditionOverflow));
             }
-        } else {
-            // it has been checked that the length is not zero
-            return Ok(0);
-        }
+        } 
         
         Ok(result)
     }
@@ -152,18 +157,23 @@ impl BiscuitConverter {
             start += 1;
         }
         let u = &u[start..];
-        length = length - start;
+        length -= start;
+
+        
+        if length == 0 {
+            // it has been checked that the length is not zero
+            return Ok(0);
+        }
         
         if length > 20 {
             return Err(CheckError::OverFlow(OverFlow));
         }
         
         let mut result= 0;
-        let mut upper = u;
         let mut lower = u;
         
         if length >= 16 {
-            upper = &u[..16];
+            let upper = &u[..16];
             let chunk_u128 = le_bytes_to_u128(upper);
             if !check_decimal_bit_u128(chunk_u128) {
                 return Err(CheckError::NonDecimal(NonDecimal));
@@ -173,8 +183,11 @@ impl BiscuitConverter {
             if length > 0 {
                 lower = &u[16..];
             }
-        } else if length >= 8 {
-            upper = &lower[..8];
+
+        } 
+
+        if length >= 8 {
+            let upper = &lower[..8];
             let chunk_u64 = le_bytes_to_u64(upper);
             if !check_decimal_bit_u64(chunk_u64) {
                 return Err(CheckError::NonDecimal(NonDecimal));
@@ -184,8 +197,11 @@ impl BiscuitConverter {
             if length > 0 {
                 lower = &lower[8..];
             }
-        } else if length >= 4 {
-            upper = &lower[..4];
+            //
+        } 
+        
+        if length >= 4 {
+            let upper = &lower[..4];
             let chunk_u32 = le_bytes_to_u32(upper);
             if !check_decimal_bit_u32(chunk_u32) {
                 return Err(CheckError::NonDecimal(NonDecimal));
@@ -199,28 +215,37 @@ impl BiscuitConverter {
             if length > 0 {
                 lower = &lower[4..];
             }
-        } else if length >= 2 {
-            upper = &upper[..2];
+        } 
+
+        if length >= 2 {
+            let upper = &lower[..2];
             let chunk_u16 = le_bytes_to_u16(upper);
             if !check_decimal_bit_u16(chunk_u16) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            result += two_to_u16_decimal(chunk_u16) as u64 * exponent_u64(length - 2);
+            if let Some(res) = result.checked_add(two_to_u16_decimal(chunk_u16) as u64 * exponent_u64(length - 2)) {
+                result = res;
+            } else {
+                return Err(CheckError::AdditionOverflow(AdditionOverflow));
+            }
             length -= 2;
             if length > 0 {
                 lower = &lower[2..];
             }
-        } else if length == 1 {
-            upper = &lower[..1];
+        } 
+        
+        if length == 1 {
+            let upper = &lower[..1];
             if !check_decimal_bit_u8(upper[0]) {
                 return Err(CheckError::NonDecimal(NonDecimal));
             }
-            result += one_to_u8(upper[0]) as u64;
-        } else {
-            // it has been checked that the length is not zero
-            return Ok(0);
-        }
-        
+            if let Some(res) = result.checked_add(one_to_u8(upper[0]) as u64) {
+                result = res;
+            } else {
+                return Err(CheckError::AdditionOverflow(AdditionOverflow));
+            }
+        } 
+    
         Ok(result)
     }
 
@@ -271,7 +296,7 @@ impl BiscuitConverter {
             4 => {
                 let chunk = le_bytes_to_u32(u);
                 if check_decimal_bit_u32(chunk) {
-                    Ok(four_to_u32(chunk) as u32)
+                    Ok(four_to_u32(chunk))  
                 } else {
                     Err(CheckError::NonDecimal(NonDecimal))
                 }
@@ -281,7 +306,7 @@ impl BiscuitConverter {
                 if !(check_decimal_bit_u32(upper) && check_decimal_bit_u8(u[4])) {
                     Err(CheckError::NonDecimal(NonDecimal))
                 } else {
-                    let upper = four_to_u32(upper) as u32;
+                    let upper = four_to_u32(upper);
                     let lower = (u[4] - b'0') as u32;
                     if let Some(res) = (upper * 10).checked_add(lower) {
                         Ok(res)
@@ -296,7 +321,7 @@ impl BiscuitConverter {
                 if !check_decimal_bit_u32(upper_chunk) || !check_decimal_bit_u16(lower_chunk) {
                     Err(CheckError::NonDecimal(NonDecimal))
                 } else {
-                    let upper = four_to_u32(upper_chunk) as u32;
+                    let upper = four_to_u32(upper_chunk);
                     let lower = two_to_u16_decimal(lower_chunk) as u32;
                     Ok(upper * 100 + lower)
                 }
@@ -308,7 +333,7 @@ impl BiscuitConverter {
                 if !check_decimal_bit_u32(upper_chunk) || !check_decimal_bit_u16(mid_chunk) || !check_decimal_bit_u8(lower_chunk) {
                     Err(CheckError::NonDecimal(NonDecimal))
                 } else {
-                    let upper = four_to_u32(upper_chunk) as u32;
+                    let upper = four_to_u32(upper_chunk);
                     let mid = two_to_u16_decimal(mid_chunk) as u32;
                     let lower = (lower_chunk - b'0') as u32;
                     Ok(upper * 1_000 + mid * 10 + lower)
@@ -443,7 +468,7 @@ impl BiscuitConverter {
             }
             1 => {
                 if u[0] >= b'0' && u[0] <= b'9' {
-                    Ok((u[0] - b'0') as u8)
+                    Ok(u[0] - b'0')
                 } else {
                     Err(CheckError::NonDecimal(NonDecimal))
                 }
@@ -462,7 +487,7 @@ impl BiscuitConverter {
                     Err(CheckError::NonDecimal(NonDecimal))
                 } else {
                     let upper = two_to_u16_decimal(upper) as u8;
-                    let lower = (u[2] - b'0') as u8;
+                    let lower = u[2] - b'0';
                     Ok(upper * 10 + lower)
                 }
             },

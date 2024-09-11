@@ -111,13 +111,13 @@ pub fn sixteen_to_u128(mut chunk: u128) -> u128 {
 }
 
 pub fn check_decimal(input: &[u8]) -> bool {
-    input.iter().all(|&x| x >= b'0' && x <= b'9')
+    input.iter().all(|&x| (b'0'..=b'9').contains(&x))
 }
 
 #[inline]
 #[must_use]
 pub fn check_decimal_bit_u8(chunk: u8) -> bool {
-    chunk >= 0x30 && chunk <= 0x39
+    (0x30..0x39).contains(&chunk)
 }
 
 const ZERO_COMPLEMENT_U16: u16 = 0x00CF;

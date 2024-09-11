@@ -3,7 +3,7 @@ mod tests {
     use biscuit_converter::BiscuitConverter;
     use biscuit_converter::error::{
         CheckError,
-        Empty,
+        OverFlow,
     };
     use anyhow::Result;
 
@@ -24,15 +24,15 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn test_to_u64() -> Result<()> {
+    fn test_to_u64_decimal() -> Result<()> {
         let biscuit = BiscuitConverter::default();
 
         for i in 1..U64_LENGTH_BOUND {
             let x_vec: Vec<u8> = vec![b'0'; i];
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u64(x);
+            let val = biscuit.to_u64_decimal(x);
             assert_eq!(
-                val, Some(0),
+                val, Ok(0),
                 "Failed for {} bytes", i
             );
         }
@@ -40,7 +40,7 @@ mod tests {
         for i in 1..U64_LENGTH_BOUND {
             let x_vec: Vec<u8> = vec![b'1'; i];
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u64(x).unwrap();
+            let val = biscuit.to_u64_decimal(x).unwrap();
             assert_eq!(
                 val, std::str::from_utf8(x)?.parse::<u64>()?,
                 "Failed for {} bytes", i
@@ -50,7 +50,7 @@ mod tests {
         for i in 1..(U64_LENGTH_BOUND-1) {
             let x_vec: Vec<u8> = vec![b'9'; i];
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u64(x).unwrap();
+            let val = biscuit.to_u64_decimal(x).unwrap();
             assert_eq!(
                 val, std::str::from_utf8(x)?.parse::<u64>()?,
                 "Failed for {} bytes", i
@@ -65,8 +65,8 @@ mod tests {
         let biscuit = BiscuitConverter::default();
         let max_string = u64::MAX.to_string();
         let max_byte: &[u8] = max_string.as_bytes();
-        let val = biscuit.to_u64(max_byte);
-        assert_eq!(val, Some(u64::MAX));
+        let val = biscuit.to_u64_decimal(max_byte);
+        assert_eq!(val, Ok(u64::MAX));
 
         let byte_test_p1 = b"18446744073709551616";
         let byte_test_n1_string = (u64::MAX - 1).to_string();
@@ -75,11 +75,11 @@ mod tests {
         let x_p1: &[u8] = &byte_test_p1[..];
         let x_n1: &[u8] = &byte_test_n1[..];
 
-        let val_p1 = biscuit.to_u64(x_p1);
-        let val_n1 = biscuit.to_u64(x_n1);
+        let val_p1 = biscuit.to_u64_decimal(x_p1);
+        let val_n1 = biscuit.to_u64_decimal(x_n1);
 
-        assert_eq!(val_p1, None);
-        assert_eq!(val_n1, Some(u64::MAX - 1));
+        assert_eq!(val_p1, Err(CheckError::OverFlow(OverFlow)));
+        assert_eq!(val_n1, Ok(u64::MAX - 1));
 
         Ok(())
     }
@@ -89,8 +89,8 @@ mod tests {
         let biscuit = BiscuitConverter::default();
         let byte_leading_zeros = b"01234567890123456780";
         let x_leading_zeros: &[u8] = &byte_leading_zeros[..];
-        let val_leading_zeros = biscuit.to_u64(x_leading_zeros);
-        assert_eq!(val_leading_zeros, Some(1234567890123456780));
+        let val_leading_zeros = biscuit.to_u64_decimal(x_leading_zeros);
+        assert_eq!(val_leading_zeros, Ok(1234567890123456780));
 
         Ok(())
     }
@@ -123,7 +123,7 @@ mod tests {
 
         for input_str in test_vec {
             let input = input_str.as_bytes();
-            let val = biscuit.to_u64(input).unwrap();
+            let val = biscuit.to_u64_decimal(input).unwrap();
             assert_eq!(
                 val, input_str.parse::<u64>()?,
                 "Failed for {}", input_str

@@ -9,7 +9,7 @@ mod tests {
         for i in i16::MIN..=i16::MAX {
             let x = i.to_string();
             let x_byte: &[u8] = x.as_bytes();
-            let val = unsafe {biscuit.to_i16_unchecked(x_byte).unwrap() };
+            let val = biscuit.to_i16_decimal(x_byte).unwrap();
             assert_eq!(
                 val, i,
                 "Failed for {} bytes", i
@@ -25,13 +25,13 @@ mod tests {
         // Test i16::MAX
         let max_string = i16::MAX.to_string();
         let max_byte: &[u8] = max_string.as_bytes();
-        let val = unsafe {biscuit.to_i16_unchecked(max_byte) };
+        let val = biscuit.to_i16_decimal(max_byte);
         assert_eq!(val, Ok(i16::MAX));
         
         // Test i16::MIN
         let min_string = i16::MIN.to_string();
         let min_byte: &[u8] = min_string.as_bytes();
-        let val = unsafe {biscuit.to_i16_unchecked(min_byte)};
+        let val = biscuit.to_i16_decimal(min_byte);
         assert_eq!(val, Ok(i16::MIN));
         
         // Test overflow

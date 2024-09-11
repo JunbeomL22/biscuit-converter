@@ -80,14 +80,14 @@
 //! Then, use it in your Rust code:
 //! ```rust
 //! use biscuit_converter::BiscuitConverter;
-//! fn main() {
-//!     let biscuit_converter = BiscuitConverter::default();
-//!     // Parsing examples
-//!     let u64_result: Option<u64> = biscuit_converter.to_u64("123");
-//!     assert_eq!(u64_result, Some(123));
-//!     let i64_result: Option<i64> = biscuit_converter.to_i64("-123");
-//!     assert_eq!(i64_result, Some(-123));
-//! }
+//! 
+//! let biscuit_converter = BiscuitConverter::default();
+//! // Parsing examples
+//! let u64_result: Option<u64> = biscuit_converter.to_u64("123");
+//! assert_eq!(u64_result, Ok(123));
+//! let i64_result: Option<i64> = biscuit_converter.to_i64("-123");
+//! assert_eq!(i64_result, Ok(-123));
+//! 
 //! ```
 //! 
 //! # License
