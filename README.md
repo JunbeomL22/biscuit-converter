@@ -70,13 +70,6 @@ Test machine: ***Ryzen 7 7700 3.8Ghz, rust 1.79***
 | -123456789012345678      | 3.5 ns  | 11.0 ns| 9.1 ns |
 | -1234567890123456789     | 3.9 ns  | 11.5 ns| 10.0 ns|
 
-## Features
-- The return type is `Option`
-- When MAX+1 is given:
-  - For unsigned integer types, it returns None
-  - For signed integer types, if it's within the bounds of the unsigned type (e.g., u64 bound for i64 case), it returns its two's complement
-- None cases: empty string, "-" in signed integer, numeric over the bound of unsigned
-
 ## Usage
 Add this to your `Cargo.toml`:
 ```toml
@@ -95,79 +88,6 @@ fn main() {
     assert_eq!(i64_result, Some(-123));
 }
 ```
-
-This crate provides a fast, safe, and efficient way to convert ASCII representations of numbers to various integer types, outperforming standard library and atoi implementations, especially for larger numbers.
-## Algorithm Explanation
-
-The `biscuit-converter` library achieves its high performance through bit manipulation techniques. The algorithm is heavily influenced by ideas from:
-
-- Rust: [Faster Integer Parsing](https://rust-malaysia.github.io/code/2020/07/11/faster-integer-parsing.html)
-- C++: [Faster Integer Parsing](https://kholdstare.github.io/technical/2020/05/26/faster-integer-parsing.html)
-
-### Key Concepts
-
-1. ASCII number representation:
-   - ASCII digits range from 0x30 ("0") to 0x39 ("9").
-   - The least significant 4 bits of an ASCII digit represent its numerical value.
-
-2. Little-endian representation is assumed
-
-3. Bit shifting:
-   - When shifting bits, empty spaces are filled with zeros.
-
-### Parsing Techniques
-***The unsafe code below is for simplicity. There is no unsafe code in the actual implementation***
-#### Single Digit Parsing
-```rust
-let x: &[u8; 1] = b"8";
-let x: u8 = unsafe { std::ptr::read_unaligned(x.as_ptr() as *const u8) };
-let y: u8 = x & 0x0f;
-assert_eq!(y, 8);
-```
-This technique uses a bitwise AND to extract the numerical value from the ASCII representation.
-
-#### Two Digit Parsing
-```rust
-let x: &[u8; 2] = b"12"; // [0x32, 0x31] in memory
-let x: u16 = unsafe { std::ptr::read_unaligned(x.as_ptr() as *const u16) };
-let lower: u16 = (x & 0x0f00) >> 8;
-let upper: u16 = (x & 0x000f) * 10;
-let res = lower + upper;
-assert_eq!(res, 12);
-```
-This method separates the tens and ones places, then combines them.
-
-#### Four Digit Parsing
-```rust
-let x: &[u8; 4] = b"1234"; // [0x34, 0x33, 0x32, 0x31] in memory
-let x: u32 = unsafe { std::ptr::read_unaligned(x.as_ptr() as *const u32) };
-let lower: u32 = (x & 0x0f000f00) >> 8;
-let upper: u32 = (x & 0x000f000f) * 10;
-let chunk = lower + upper;
-let lower: u32 = (chunk & 0x00ff0000) >> 16;
-let upper: u32 = (chunk & 0x000000ff) * 100;
-let res = lower + upper;
-assert_eq!(res, 1234);
-```
-This technique processes pairs of digits at a time, then combines the results.
-
-#### Handling Irregular Digit Counts
-```rust
-let x: &[u8; 3] = b"123";
-let x: u32 = unsafe { std::ptr::read_unaligned(x.as_ptr() as *const u32) };
-let x = x << 8; // Shift to align the digits properly
-```
-Left-shifting is used to handle inputs with irregular numbers of digits.
-
-#### Parsing Negative Numbers
-```rust
-let x = b"-123";
-let x_u = x[1..]; // b"123"
-let x_u: u32 = bit_parse(x_u);
-let res: i32 = (!x_u).wrapping_add(1) as i32;
-assert_eq!(res, -123);
-```
-Negative numbers are handled by parsing the absolute value and then applying two's complement.
 
 # License
 This project is licensed under either of

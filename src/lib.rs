@@ -71,13 +71,6 @@
 //! | -123456789012345678      | 3.5 ns  | 11.0 ns| 9.1 ns |
 //! | -1234567890123456789     | 3.9 ns  | 11.5 ns| 10.0 ns|
 //!
-//! ## Features
-//! - The return type is `Option`
-//! - When MAX+1 is given:
-//!   - For unsigned integer types, it returns None
-//!   - For signed integer types, if it's within the bounds of the unsigned type (e.g., u64 bound for i64 case), it returns its two's complement
-//! - None cases: empty string, "-" in signed integer, numeric over the bound of unsigned
-//!
 //! ## Usage
 //! Add this to your `Cargo.toml`:
 //! ```toml
@@ -96,33 +89,7 @@
 //!     assert_eq!(i64_result, Some(-123));
 //! }
 //! ```
-//!
-//! This crate provides a fast, safe, and efficient way to convert ASCII representations of numbers 
-//! to various integer types, outperforming standard library and atoi implementations, especially for larger numbers.
-//!
-//! ## Algorithm Explanation
-//!
-//! The `biscuit-converter` library achieves its high performance through bit manipulation techniques. 
-//! The algorithm is heavily influenced by ideas from:
-//!
-//! - Rust: [Faster Integer Parsing](https://rust-malaysia.github.io/code/2020/07/11/faster-integer-parsing.html)
-//! - C++: [Faster Integer Parsing](https://kholdstare.github.io/technical/2020/05/26/faster-integer-parsing.html)
-//!
-//! ### Key Concepts
-//!
-//! 1. ASCII number representation:
-//!    - ASCII digits range from 0x30 ("0") to 0x39 ("9").
-//!    - The least significant 4 bits of an ASCII digit represent its numerical value.
-//!
-//! 2. Little-endian representation is assumed
-//!
-//! 3. Bit shifting:
-//!    - When shifting bits, empty spaces are filled with zeros.
-//!
-//! ### Parsing Techniques
-//!
-//! (Detailed parsing techniques omitted for brevity in code documentation)
-//!
+//! 
 //! # License
 //! This project is licensed under either of
 //!

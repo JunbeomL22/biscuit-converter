@@ -107,6 +107,18 @@ pub fn sixteen_to_u128(mut chunk: u128) -> u128 {
     chunk
 }
 
+/*
+const NINE_COMPLEMENT_U16: u16 = 0x00CF;
+const ZERO_COMPLEMENT_U16: u16 = 0x00C6;
+
+pub fn check_decimal(input: &[u8]) -> bool {
+    input.iter().all(|&x| x >= b'0' && x <= b'9')
+}
+
+pub fn check_decimal_bit(input: &[u8]) -> bool {
+    input.iter().all(|&x| x >= b'0' && x <= b'9')
+}
+*/
 
 #[cfg(test)]
 mod tests {
