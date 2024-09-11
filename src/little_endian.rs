@@ -38,43 +38,6 @@ pub fn le_bytes_to_u16(input: &[u8]) -> u16 {
     u16::from_le_bytes(bytes)
 }
 
-/*
-// from_le_bytes version for u128 (up to 16 bytes)
-#[inline(always)]
-#[must_use]
-pub fn le_bytes_to_u128(input: &[u8]) -> u128 {
-    let mut bytes = [0u8; 16];
-    bytes[..input.len()].copy_from_slice(input);
-    u128::from_le_bytes(bytes)
-}
-
-// from_le_bytes version for u64 (up to 8 bytes)
-#[inline(always)]
-#[must_use]
-pub fn le_bytes_to_u64(input: &[u8]) -> u64 {
-    let mut bytes = [0u8; 8];
-    bytes[..input.len()].copy_from_slice(input);
-    u64::from_le_bytes(bytes)
-}
-
-// from_le_bytes version for u32 (up to 4 bytes)
-#[inline(always)]
-#[must_use]
-pub fn le_bytes_to_u32(input: &[u8]) -> u32 {
-    let mut bytes = [0u8; 4];
-    bytes[..input.len()].copy_from_slice(input);
-    u32::from_le_bytes(bytes)
-}
-
-// from_le_bytes version for u16 (up to 2 bytes)
-#[inline(always)]
-#[must_use]
-pub fn le_bytes_to_u16(input: &[u8]) -> u16 {
-    let mut bytes = [0u8; 2];
-    bytes[..input.len()].copy_from_slice(input);
-    u16::from_le_bytes(bytes)
-}
-*/
 #[inline(always)]
 #[must_use]
 pub fn two_to_u16(chunk: u16) -> u16 {
@@ -125,8 +88,6 @@ pub fn eight_to_u64(mut chunk: u64) -> u64 {
 #[inline(always)]
 #[must_use]
 pub fn sixteen_to_u128(mut chunk: u128) -> u128 {
-    //chunk <<= 128 - length * 8;
-
     let lower_digits = (chunk & 0x0f000f000f000f000f000f000f000f00) >> 8;
     let upper_digits = (chunk & 0x000f000f000f000f000f000f000f000f) * 10;
     chunk = lower_digits + upper_digits;
@@ -145,6 +106,7 @@ pub fn sixteen_to_u128(mut chunk: u128) -> u128 {
     //
     chunk
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -182,3 +144,4 @@ mod tests {
         assert_eq!(sixteen_to_u128(x), 1234567890123456);
     }
 }
+

@@ -1,21 +1,8 @@
 # biscuit-converter
 
-biscuit-converter is a high-performance integer conversion library using bitwise operations. It provides safe and efficient ASCII to integer conversion.
-
-## Key Features
-
-- **High Performance**: Maintains consistent performance as the number of digits increases, showing exceptional speed especially for large numbers.
-- **Safety**: No unsafe code is used.
-- **Lightweight**: No external libraries are used besides the std library.
-- **Wide Integer Support**: Supports conversion for u16, u32, u64, u128, i16, i32, i64, i128.
-- **ASCII Specialized**: Only capable of converting ASCII type numbers.
+biscuit-converter is a integer parser for decimal format using bitwise operations. 
 
 ## Performance
-
-biscuit-converter shows outstanding performance, particularly for large number conversions:
-
-- For numbers with 16 or more digits, it's more than 3 times faster than atoi.
-- For numbers with 32 or more digits, it's nearly 4 times faster than atoi.
 
 Test machine: ***Ryzen 7 7700 3.8Ghz, rust 1.79***
 
