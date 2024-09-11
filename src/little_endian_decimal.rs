@@ -40,7 +40,7 @@ pub fn le_bytes_to_u16(input: &[u8]) -> u16 {
 
 #[inline(always)]
 #[must_use]
-pub fn two_to_u16(chunk: u16) -> u16 {
+pub fn two_to_u16_decimal(chunk: u16) -> u16 {
     ((chunk & 0x0f00) >> 8) + (chunk & 0x000f) * 10
 }
 
@@ -112,6 +112,12 @@ pub fn sixteen_to_u128(mut chunk: u128) -> u128 {
 
 pub fn check_decimal(input: &[u8]) -> bool {
     input.iter().all(|&x| x >= b'0' && x <= b'9')
+}
+
+#[inline]
+#[must_use]
+pub fn check_decimal_bit_u8(chunk: u8) -> bool {
+    chunk >= 0x30 && chunk <= 0x39
 }
 
 const ZERO_COMPLEMENT_U16: u16 = 0x00CF;
@@ -263,7 +269,7 @@ mod tests {
         let u = b"12";
         let x: &[u8] = &u[..];
         let x = le_bytes_to_u16(x);
-        assert_eq!(two_to_u16(x), 12);
+        assert_eq!(two_to_u16_decimal(x), 12);
     }
 
     #[test]

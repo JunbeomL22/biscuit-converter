@@ -51,6 +51,7 @@ dependencies = [
  "anyhow",
  "atoi",
  "criterion",
+ "once_cell",
 ]
 
 [[package]]

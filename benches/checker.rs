@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion, black_box};
 
-use biscuit_converter::little_endian::{
+use biscuit_converter::little_endian_decimal::{
     check_decimal,
     check_decimal_bit_u16,
     check_decimal_bit_u32,
@@ -16,7 +16,7 @@ use biscuit_converter::little_endian::{
 fn check_decimal_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("check_decimal u16");
     let x = b"12";
-    let x_chunk = le_bytes_to_u16(x);
+    let x_chunk = le_bytes_to_u16_decimal(x);
 
     group.bench_function("check_decimal", |b| b.iter(|| check_decimal(black_box(x))));
     group.bench_function("check_decimal_bit_u16", |b| b.iter(|| check_decimal_bit_u16(black_box(x_chunk))));

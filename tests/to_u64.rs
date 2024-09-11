@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
+    use biscuit_converter::error::{
+        CheckError,
+        Empty,
+    };
     use anyhow::Result;
 
     const U64_LENGTH_BOUND: usize = 20;
@@ -8,12 +12,12 @@ mod tests {
     fn test_back_and_forth() -> Result<()> {
         let biscuit = BiscuitConverter::default();
 
-        for i in 1..1_000_000 {
+        for i in (0..1_000_000_000).step_by(1000) {
             let x = i.to_string();
             let x_byte: &[u8] = x.as_bytes();
-            let val = biscuit.to_u64(x_byte).unwrap();
+            let val = biscuit.to_u64_decimal(x_byte);
             assert_eq!(
-                val, i,
+                val, Ok(i),
                 "Failed for {} bytes", i
             );
         }

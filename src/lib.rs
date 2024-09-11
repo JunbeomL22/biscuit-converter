@@ -102,17 +102,12 @@
 //!
 //! We welcome all kinds of contributions! Whether it's bug reports, feature requests, or code contributions, 
 //! your input is valuable and appreciated. Feel free to open issues or submit pull requests on our GitHub repository.
-pub mod unsigned;
-pub mod little_endian;
-pub mod integer;
-
+pub mod unsigned_decimal;
+pub mod little_endian_decimal;
+pub mod integer_decimal;
+pub mod error;
+pub mod exponent;
 /// Parser for decimal notation
 /// It can not parse scientific notation
 #[derive(Debug, Clone, Copy, Default)]
 pub struct BiscuitConverter {}
-
-impl BiscuitConverter {
-    pub fn new() -> Self {
-        BiscuitConverter {}
-    }
-}

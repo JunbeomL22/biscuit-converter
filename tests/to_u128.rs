@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
+    use biscuit_converter::error::{
+        CheckError,
+        Empty,
+    };
     use anyhow::Result;
     const U128_LENGTH_BOUND: usize = 39;
     
@@ -11,9 +15,9 @@ mod tests {
         for i in 1..U128_LENGTH_BOUND {
             let x_vec: Vec<u8> = vec![b'0'; i];
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u128(x);
+            let val = biscuit.to_u128_decimal(x);
             assert_eq!(
-                val, Some(0),
+                val, Ok(0),
                 "Failed for {} bytes", i
             );
         }
@@ -21,7 +25,7 @@ mod tests {
         for i in 1..U128_LENGTH_BOUND {
             let x_vec: Vec<u8> = vec![b'1'; i];
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u128(x).unwrap();
+            let val = biscuit.to_u128_decimal(x).unwrap();
             assert_eq!(
                 val, std::str::from_utf8(x)?.parse::<u128>()?,
                 "Failed for {} bytes", i
@@ -30,7 +34,7 @@ mod tests {
         for i in 1..U128_LENGTH_BOUND {
             let x_vec: Vec<u8> = vec![b'2'; i];
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_u128(x).unwrap();
+            let val = biscuit.to_u128_decimal(x).unwrap();
             assert_eq!(val, std::str::from_utf8(x)?.parse::<u128>()?);
         }
 

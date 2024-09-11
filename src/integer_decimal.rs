@@ -1,4 +1,8 @@
 use crate::BiscuitConverter;
+use crate::error::{
+    CheckError, Empty, NonDecimal
+};
+
 impl BiscuitConverter {
     #[inline]
     pub fn to_i128<T: AsRef<[u8]>>(self, input: T) -> Option<i128> {
@@ -30,32 +34,53 @@ impl BiscuitConverter {
         }
     }
 
-    #[inline(always)]
-    pub fn to_i32<T: AsRef<[u8]>>(self, input: T) -> Option<i32> {
+    #[inline]
+    pub fn to_i32_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<i32, CheckError> {
         let u = input.as_ref();
         if u.is_empty() || u == b"-" {
-            return None;
+            return Err(CheckError::Empty(Empty));
         }
         match u[0] == b'-' {
             true => {
-                let unsigned = self.to_u32(&u[1..]);   
-                unsigned.map(|val| (!(val as i32)).wrapping_add(1))
+                match self.to_u32_decimal(&u[1..]) {
+                    Ok(res) => Ok((!(res as i32)).wrapping_add(1)),
+                    Err(e) => Err(e),
+                }
             },
-            _ => self.to_u32(u).map(|val| val as i32),
+            _ => self.to_u32_decimal(u).map(|val| val as i32),
         }
     }
 
-    pub fn to_i16<T: AsRef<[u8]>>(self, input: T) -> Option<i16> {
+    /// # Safety
+    /// The caller must ensure that the input is a valid decimal number
+    pub unsafe fn to_i16_unchecked<T: AsRef<[u8]>>(self, input: T) -> Result<i16, CheckError> {
+        let u = input.as_ref();
+        match u[0] == b'-' {
+            true => {
+                if let Ok(unsigned) = unsafe {self.to_u16_unchecked(&u[1..]) } {
+                    Ok((!(unsigned as i16)).wrapping_add(1))
+                } else {
+                    Err(CheckError::NonDecimal(NonDecimal))
+                }
+            },
+            _ => unsafe {self.to_u16_unchecked(u).map(|val| val as i16)},
+        }
+    }
+
+    pub fn to_i16_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<i16, CheckError> {
         let u = input.as_ref();
         if u.is_empty() || u == b"-" {
-            return None;
+            return Err(CheckError::Empty(Empty));
         }
         match u[0] == b'-' {
             true => {
-                let unsigned = self.to_u16(&u[1..]);   
-                unsigned.map(|val| (!(val as i16)).wrapping_add(1))
+                if let Ok(unsigned) = self.to_u16_decimal(&u[1..]) {
+                    Ok((!(unsigned as i16)).wrapping_add(1))
+                } else {
+                    Err(CheckError::NonDecimal(NonDecimal))
+                }
             },
-            _ => self.to_u16(u).map(|val| val as i16),
+            _ => self.to_u16_decimal(u).map(|val| val as i16),
         }
     }
 }
@@ -68,8 +93,8 @@ mod tests {
     #[test]
     fn test_conversion() -> Result<()> {
         let biscuit_parser = BiscuitConverter::default();
-        assert_eq!(biscuit_parser.to_i16("-1234").unwrap(), -1234);
-        assert_eq!(biscuit_parser.to_i32("-123456789").unwrap(), -123456789);
+        assert_eq!(unsafe {biscuit_parser.to_i16_unchecked("-1234").unwrap() }, -1234);
+        assert_eq!(biscuit_parser.to_i32_decimal("-123456789").unwrap(), -123456789);
         assert_eq!(biscuit_parser.to_i64("-123456789012345").unwrap(), -123456789012345);
         assert_eq!(biscuit_parser.to_i128("-1234567890123456789012345").unwrap(), -1234567890123456789012345);
         

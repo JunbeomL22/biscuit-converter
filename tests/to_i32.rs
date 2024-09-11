@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
+    use biscuit_converter::error::{
+        CheckError,
+        Empty,
+    };
     use anyhow::Result;
     const I32_LENGTH_BOUND: usize = 11;  // Adjusted for i32, including sign
 
@@ -10,10 +14,10 @@ mod tests {
         for i in (-1_000_000..1_000_000).step_by(1000) {
             let x = i.to_string();
             let x_byte: &[u8] = x.as_bytes();
-            let val = biscuit.to_i32(x_byte).unwrap();
+            let val = biscuit.to_i32_decimal(x_byte);
             assert_eq!(
-                val, i,
-                "Failed for {}", i
+                val, Ok(i),
+                "Failed for {} the string: \"{}\" byte: {:?}", i, x, x_byte,
             );
         }
         Ok(())
@@ -26,17 +30,17 @@ mod tests {
             let mut x_vec: Vec<u8> = vec![b'0'; i];
             x_vec[0] = b'-';  // Test negative numbers
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_i32(x);
+            let val = biscuit.to_i32_decimal(x);
             assert_eq!(
-                val, Some(0),
-                "Failed for {} bytes", i
+                val, Ok(0),
+                "Failed for {}-th attempt, where byte: {:?}", i, x,
             );
         }
         for i in 2..I32_LENGTH_BOUND {
             let mut x_vec: Vec<u8> = vec![b'1'; i];
             x_vec[0] = b'-';  // Test negative numbers
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_i32(x).unwrap();
+            let val = biscuit.to_i32_decimal(x).unwrap();
             assert_eq!(
                 val, std::str::from_utf8(x)?.parse::<i32>()?,
                 "Failed for {} bytes", i
@@ -45,7 +49,7 @@ mod tests {
         for i in 1..(I32_LENGTH_BOUND-1) {
             let x_vec: Vec<u8> = vec![b'9'; i];
             let x: &[u8] = &x_vec[..];
-            let val = biscuit.to_i32(x).unwrap();
+            let val = biscuit.to_i32_decimal(x).unwrap();
             assert_eq!(
                 val, std::str::from_utf8(x)?.parse::<i32>()?,
                 "Failed for {} bytes", i
@@ -61,20 +65,20 @@ mod tests {
         // Test i32::MAX
         let max_string = i32::MAX.to_string();
         let max_byte: &[u8] = max_string.as_bytes();
-        let val = biscuit.to_i32(max_byte);
-        assert_eq!(val, Some(i32::MAX));
+        let val = biscuit.to_i32_decimal(max_byte);
+        assert_eq!(val, Ok(i32::MAX));
         
         // Test i32::MIN
         let min_string = i32::MIN.to_string();
         let min_byte: &[u8] = min_string.as_bytes();
-        let val = biscuit.to_i32(min_byte);
-        assert_eq!(val, Some(i32::MIN));
+        let val = biscuit.to_i32_decimal(min_byte);
+        assert_eq!(val, Ok(i32::MIN));
         
         // Test overflow
         let byte_test_p1 = b"2147483648";  // i32::MAX + 1
         let byte_test_n1 = b"-2147483649";  // i32::MIN - 1
-        let val_p1 = biscuit.to_i32(byte_test_p1);
-        let val_n1 = biscuit.to_i32(byte_test_n1);
+        let val_p1 = biscuit.to_i32_decimal(byte_test_p1);
+        let val_n1 = biscuit.to_i32_decimal(byte_test_n1);
         assert_eq!(val_p1.unwrap(), -2147483648);
         assert_eq!(val_n1.unwrap(), 2147483647);
         
@@ -86,10 +90,10 @@ mod tests {
         let biscuit = BiscuitConverter::default();
         let byte_leading_zeros_pos = b"01234567890";
         let byte_leading_zeros_neg = b"-01234567890";
-        let val_leading_zeros_pos = biscuit.to_i32(byte_leading_zeros_pos);
-        let val_leading_zeros_neg = biscuit.to_i32(byte_leading_zeros_neg);
-        assert_eq!(val_leading_zeros_pos, Some(1234567890));
-        assert_eq!(val_leading_zeros_neg, Some(-1234567890));
+        let val_leading_zeros_pos = biscuit.to_i32_decimal(byte_leading_zeros_pos);
+        let val_leading_zeros_neg = biscuit.to_i32_decimal(byte_leading_zeros_neg);
+        assert_eq!(val_leading_zeros_pos, Ok(1234567890));
+        assert_eq!(val_leading_zeros_neg, Ok(-1234567890));
         Ok(())
     }
 }
