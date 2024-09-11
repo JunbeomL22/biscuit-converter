@@ -21,4 +21,8 @@ harness = false
 name = "i128"
 harness = false
 
+[[bench]]
+name = "checker"
+harness = false
+
 
