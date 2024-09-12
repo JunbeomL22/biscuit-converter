@@ -1,39 +1,19 @@
-use crate::{exponent, BiscuitConverter};
-use crate::error::{
-    AdditionOverflow, 
-    CheckError, 
-    Empty, 
-    OverFlow, 
-    NonDecimal,
-};
-use crate::exponent::{
-    exponent_u64,
-    exponent_u128,
-};
+use crate::BiscuitConverter;
+use crate::error::CheckError;
 
 use crate::little_endian_decimal::{
-    one_to_u8,
-    two_to_u16_decimal,
-    four_to_u32, 
-    eight_to_u64, 
-    sixteen_to_u128,
-    le_bytes_to_u16,
-    le_bytes_to_u32,
-    le_bytes_to_u64,
-    le_bytes_to_u128,
-    check_decimal_bit_u128,
-    check_decimal_bit_u64,
-    check_decimal_bit_u32,
-    check_decimal_bit_u16,
-    check_decimal_bit_u8,
+    checked_conversion_u8,
+    checked_conversion_u16,
+    checked_conversion_u32,
+    checked_conversion_u64,
+    checked_conversion_u128,
 };
 
 impl BiscuitConverter {
-    pub fn to_u128_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u128, CheckError> {
-        let u = input.as_ref();
+    pub fn to_u128_decimal(self, u: &[u8]) -> Result<u128, CheckError> {
         let mut length = u.len();
         if length == 0 {
-            return Err(CheckError::Empty(Empty));
+            return Err(CheckError::Empty)
         }
         let mut start = 0;
         while start < length && u[start] == b'0' {
@@ -41,118 +21,306 @@ impl BiscuitConverter {
         }
         let u = &u[start..];
         length -= start;
-        
-        
-        if length == 0 {
-            // it has been checked that the length is not zero
-            return Ok(0);
-        }
 
-        if length > 39 {
-            return Err(CheckError::OverFlow(OverFlow));
-        }
-        
-        let mut result: u128 = 0;
-        let mut lower = u;
-
-        if length >= 32 {
-            // Process first 16 bytes
-            let upper = &u[..16];
-            let chunk_u128 = le_bytes_to_u128(upper);
-            if !check_decimal_bit_u128(chunk_u128) {
-                return Err(CheckError::NonDecimal(NonDecimal));
+        match length {
+            0 => Ok(0),
+            1 => checked_conversion_u8(u).map(|val| val as u128),
+            2 => checked_conversion_u16(u).map(|val| val as u128),
+            3 => {
+                let upper_chunk = checked_conversion_u16(&u[..2])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[2..])? as u128;
+                Ok(upper_chunk * 10 + lower_chunk)
             }
-            result = sixteen_to_u128(chunk_u128) * exponent_u128(length - 16);
-            
-            length -= 16;
-            if length > 0 {
-                lower = &u[16..];
-            }
-
-            // Process next 16 bytes
-            let upper = &lower[..16];
-            let chunk_u128 = le_bytes_to_u128(upper);
-            if !check_decimal_bit_u128(chunk_u128) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            result += sixteen_to_u128(chunk_u128) * exponent_u128(length - 16);
-            
-            length -= 16;
-            if length > 0 {
-                lower = &u[16..];
-            }
-        } 
-        
-        if length >= 16 {
-            let upper = &lower[..16];
-            let chunk_u128 = le_bytes_to_u128(upper);
-            if !check_decimal_bit_u128(chunk_u128) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            result += sixteen_to_u128(chunk_u128) * exponent_u128(length - 16);
-            length -= 16;
-            if length > 0 {
-                lower = &lower[16..];
-            }
-        } 
-
-        if length >= 8 {
-            let upper = &lower[..8];
-            let chunk_u64 = le_bytes_to_u64(upper);
-            if !check_decimal_bit_u64(chunk_u64) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            result += eight_to_u64(chunk_u64) as u128 * exponent_u128(length - 8);
-            length -= 8;
-            if length > 0 {
-                lower = &lower[8..];
-            }
-        } 
-        if length >= 4 {
-            let upper = &lower[..4];
-            let chunk_u32 = le_bytes_to_u32(upper);
-            if !check_decimal_bit_u32(chunk_u32) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            result = result.wrapping_add(four_to_u32(chunk_u32) as u128).wrapping_mul(exponent_u128(length - 4));
-            dbg!(result);
-            length -= 4;
-            if length > 0 {
-                lower = &lower[4..];
-            }
-        } 
-        if length >= 2 {
-            let upper = &lower[..2];
-            let chunk_u16 = le_bytes_to_u16(upper);
-            if !check_decimal_bit_u16(chunk_u16) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            result = result.wrapping_add(two_to_u16_decimal(chunk_u16) as u128).wrapping_mul(exponent_u128(length - 2));
-            length -= 2;
-            if length > 0 {
-                lower = &lower[2..];
-            }
-        } 
-        if length == 1 {
-            let upper = &lower[..1];
-            if !check_decimal_bit_u8(upper[0]) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            if let Some(res) = result.checked_add(one_to_u8(upper[0]) as u128) {
-                result = res;
-            } else {
-                return Err(CheckError::AdditionOverflow(AdditionOverflow));
-            }
-        } 
-        
-        Ok(result)
+            4 => checked_conversion_u32(u).map(|val| val as u128),
+            5 => {
+                let upper_chunk = checked_conversion_u32(&u[..4])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[4..])? as u128;
+                Ok(upper_chunk * 10 + lower_chunk)
+            },
+            6 => {
+                let upper_chunk = checked_conversion_u32(&u[..4])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[4..])? as u128;
+                Ok(upper_chunk * 100 + lower_chunk)
+            },
+            7 => {
+                let upper_chunk = checked_conversion_u32(&u[..4])? as u128;
+                let mid_chunk = checked_conversion_u16(&u[4..6])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[6..])? as u128;
+                Ok(upper_chunk * 1_000 + mid_chunk * 10 + lower_chunk)
+            },
+            8 => checked_conversion_u64(u).map(|val| val as u128),
+            9 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[8..])? as u128;
+                Ok(upper_chunk * 10 + lower_chunk)
+            },
+            10 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[8..])? as u128;
+                Ok(upper_chunk * 100 + lower_chunk)
+            },
+            11 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])? as u128;
+                let mid_chunk = checked_conversion_u16(&u[8..10])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[10..])? as u128;
+                Ok(upper_chunk * 1_000 + mid_chunk * 10 + lower_chunk)
+            },
+            12 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])? as u128;
+                let lower_chunk = checked_conversion_u32(&u[8..])? as u128;
+                Ok(upper_chunk * 10_000 + lower_chunk)
+            },
+            13 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])? as u128;
+                let mid_chunk = checked_conversion_u32(&u[8..12])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[12..])? as u128;
+                Ok(upper_chunk * 100_000 + mid_chunk * 10 + lower_chunk)
+            },
+            14 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])? as u128;
+                let mid_chunk = checked_conversion_u32(&u[8..12])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[12..])? as u128;
+                Ok(upper_chunk * 1_000_000 + mid_chunk * 100 + lower_chunk)
+            },
+            15 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])? as u128;
+                let mid_chunk = checked_conversion_u32(&u[8..12])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[12..14])? as u128;
+                let last_chunk = checked_conversion_u8(&u[14..])? as u128;
+                let upper = upper_chunk * 10_000_000;
+                let mid = mid_chunk * 1_000;
+                let lower = lower_chunk * 10;
+                Ok(upper + mid + lower + last_chunk)
+            },
+            16 => checked_conversion_u128(u),
+            17 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u8(&u[16..])? as u128;
+                Ok(upper_chunk * 10 + lower_chunk)
+            },
+            18 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u16(&u[16..])? as u128;
+                Ok(upper_chunk * 100 + lower_chunk)
+            },
+            19 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u16(&u[16..18])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[18..])? as u128;
+                let upper = upper_chunk * 1_000;
+                let mid = mid_chunk * 10;
+                let lower = lower_chunk;
+                Ok(upper + mid + lower)
+            },
+            20 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u32(&u[16..])? as u128;
+                let upper = upper_chunk * 10_000;
+                Ok(upper + lower_chunk)
+            },
+            21 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u32(&u[16..20])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[20..])? as u128;
+                let upper = upper_chunk * 100_000;
+                let mid = mid_chunk * 10;
+                let lower = lower_chunk;
+                Ok(upper + mid + lower)
+            },
+            22 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u32(&u[16..20])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[20..])? as u128;
+                let upper = upper_chunk * 1_000_000;
+                let mid = mid_chunk * 100;
+                let lower = lower_chunk;
+                Ok(upper + mid + lower)
+            },
+            23 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u32(&u[16..20])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[20..22])? as u128;
+                let last_chunk = checked_conversion_u8(&u[22..])? as u128;
+                let upper = upper_chunk * 10_000_000;
+                let mid = mid_chunk * 1_000;
+                let lower = lower_chunk * 10;
+                Ok(upper + mid + lower + last_chunk)
+            },
+            24 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let upper = upper_chunk * 100_000_000;
+                Ok(upper + lower_chunk)
+            },
+            25 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let lower_chunk = checked_conversion_u8(&u[24..])? as u128;
+                let upper = upper_chunk * 1_000_000_000;
+                let mid = mid_chunk * 10;
+                Ok(upper + mid + lower_chunk)
+            },
+            26 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[24..])? as u128;
+                let upper = upper_chunk * 10_000_000_000;
+                let mid = mid_chunk * 100;
+                Ok(upper + mid + lower_chunk)
+            },
+            27 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[24..26])? as u128;
+                let last_chunk = checked_conversion_u8(&u[26..])? as u128;
+                let upper = upper_chunk * 100_000_000_000;
+                let mid = mid_chunk * 1_000;
+                let lower = lower_chunk * 10;
+                Ok(upper + mid + lower + last_chunk)
+            },
+            28 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let lower_chunk = checked_conversion_u32(&u[24..])? as u128;
+                let upper = upper_chunk * 1_000_000_000_000;
+                let mid = mid_chunk * 10_000;
+                Ok(upper + mid + lower_chunk)
+            },
+            29 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let lower_chunk = checked_conversion_u32(&u[24..28])? as u128;
+                let last_chunk = checked_conversion_u8(&u[28..])? as u128;
+                let upper = upper_chunk * 10_000_000_000_000;
+                let mid = mid_chunk * 100_000;
+                let lower = lower_chunk * 10;
+                Ok(upper + mid + lower + last_chunk)
+            },
+            30 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let lower_chunk = checked_conversion_u32(&u[24..28])? as u128;
+                let last_chunk = checked_conversion_u16(&u[28..30])? as u128;
+                let upper = upper_chunk * 100_000_000_000_000;
+                let mid = mid_chunk * 1_000_000;
+                let lower = lower_chunk * 100;
+                Ok(upper + mid + lower + last_chunk)
+            },
+            31 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u64(&u[16..24])? as u128;
+                let lower_chunk = checked_conversion_u32(&u[24..28])? as u128;
+                let tail_chunk = checked_conversion_u16(&u[28..30])? as u128;
+                let last = checked_conversion_u8(&u[30..])? as u128;
+                let upper = upper_chunk * 1_000_000_000_000_000;
+                let mid = mid_chunk * 10_000_000;
+                let lower = lower_chunk * 1_000;
+                let tail = tail_chunk * 10;
+                
+                Ok(upper + mid + lower + tail + last)
+            },
+            32 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u128(&u[16..])? as u128;
+                let upper = upper_chunk * 10_000_000_000_000_000;
+                Ok(upper + lower_chunk)
+            },
+            33 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u128(&u[16..32])?;
+                let lower_chunk = checked_conversion_u8(&u[32..])? as u128;
+                let upper = upper_chunk.wrapping_mul(100_000_000_000_000_000);
+                let mid = mid_chunk * 10;
+                Ok(mid + lower_chunk + upper)
+            },
+            34 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u128(&u[16..32])?;
+                let lower_chunk = checked_conversion_u16(&u[32..])? as u128;
+                let upper = upper_chunk.wrapping_mul(1_000_000_000_000_000_000);
+                let mid = mid_chunk * 100;
+                let res = mid + lower_chunk;
+                if let Some(res) = upper.checked_add(res) {
+                    Ok(res)
+                } else {
+                    Err(CheckError::Overflow)
+                }
+            },
+            35 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])? as u128;
+                let mid_chunk = checked_conversion_u128(&u[16..32])? as u128;
+                let lower_chunk = checked_conversion_u16(&u[32..34])? as u128;
+                let last_chunk = checked_conversion_u8(&u[34..])? as u128;
+                let upper = upper_chunk.wrapping_mul(10_000_000_000_000_000_000);
+                let mid = mid_chunk * 1_000;
+                let lower = lower_chunk * 10;
+                Ok(upper + mid + lower + last_chunk)
+            },
+            36 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u128(&u[16..32])?;
+                let lower_chunk = checked_conversion_u32(&u[32..])? as u128;
+                let upper = upper_chunk.wrapping_mul(100_000_000_000_000_000_000);
+                let mid = mid_chunk * 10_000;
+                let res = mid + lower_chunk;
+                if let Some(res) = upper.checked_add(res) {
+                    Ok(res)
+                } else {
+                    Err(CheckError::Overflow)
+                }
+            },
+            37 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u128(&u[16..32])?;
+                let lower_chunk = checked_conversion_u32(&u[32..36])? as u128;
+                let last_chunk = checked_conversion_u8(&u[36..])? as u128;
+                let upper = upper_chunk.wrapping_mul(1_000_000_000_000_000_000_000);
+                let mid = mid_chunk * 100_000;
+                let lower = lower_chunk * 10;
+                Ok(upper + mid + lower + last_chunk)
+            },
+            38 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u128(&u[16..32])?;
+                let lower_chunk = checked_conversion_u32(&u[32..36])? as u128;
+                let last_chunk = checked_conversion_u16(&u[36..])? as u128;
+                let upper = upper_chunk.wrapping_mul(10_000_000_000_000_000_000_000);
+                let mid = mid_chunk * 1_000_000;
+                let lower = lower_chunk * 100;
+                let res = mid + lower + last_chunk;
+                if let Some(res) = upper.checked_add(res) {
+                    Ok(res)
+                } else {
+                    Err(CheckError::Overflow)
+                }
+            },
+            39 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u128(&u[16..32])?;
+                let lower_chunk = checked_conversion_u32(&u[32..36])? as u128;
+                let tail_chunk = checked_conversion_u16(&u[36..38])? as u128;
+                let last = checked_conversion_u8(&u[38..])? as u128;
+                let upper = upper_chunk.wrapping_mul(100_000_000_000_000_000_000_000);
+                let mid = mid_chunk * 10_000_000;
+                let lower = lower_chunk * 1000;
+                let tail = tail_chunk * 10;
+                let res = mid + lower + tail + last;
+                if let Some(res) = upper.checked_add(res) {
+                    Ok(res)
+                } else {
+                    Err(CheckError::Overflow)
+                }
+            },
+            _ => Err(CheckError::Overflow)
+        }        
+ 
     }
 
     pub fn to_u64_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u64, CheckError> {
         let u = input.as_ref();
         let mut length = u.len();
         if length == 0 {
-            return Err(CheckError::Empty(Empty));
+            return Err(CheckError::Empty)
         }
         let mut start = 0;
         while start < length && u[start] == b'0' {
@@ -161,96 +329,128 @@ impl BiscuitConverter {
         let u = &u[start..];
         length -= start;
 
-        
-        if length == 0 {
-            // it has been checked that the length is not zero
-            return Ok(0);
+        match length {
+            0 => Ok(0),
+            1 => checked_conversion_u8(u).map(|val| val as u64),
+            2 => checked_conversion_u16(u).map(|val| val as u64),
+            3 => {
+                let upper_chunk = checked_conversion_u16(&u[..2])?;
+                let lower_chunk = checked_conversion_u8(&u[2..])?;
+                Ok((upper_chunk as u64) * 10 + lower_chunk as u64)
+            }
+            4 => checked_conversion_u32(u).map(|val| val as u64),
+            5 => {
+                let upper_chunk = checked_conversion_u32(&u[..4])?;
+                let lower_chunk = checked_conversion_u8(&u[4..])?;
+                Ok((upper_chunk) as u64 * 10 + lower_chunk as u64)
+            },
+            6 => {
+                let upper_chunk = checked_conversion_u32(&u[..4])?;
+                let lower_chunk = checked_conversion_u16(&u[4..])?;
+                Ok(upper_chunk as u64 * 100 + lower_chunk as u64)
+            },
+            7 => {
+                let upper_chunk = checked_conversion_u32(&u[..4])?;
+                let mid_chunk = checked_conversion_u16(&u[4..6])?;
+                let lower_chunk = checked_conversion_u8(&u[6..])?;
+                Ok(upper_chunk as u64 * 1_000 + mid_chunk as u64 * 10 + lower_chunk as u64)
+            },
+            8 => checked_conversion_u64(u),
+            9 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let lower_chunk = checked_conversion_u8(&u[8..])?;
+                Ok(upper_chunk as u64 * 10 + lower_chunk as u64)
+            },
+            10 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let lower_chunk = checked_conversion_u16(&u[8..])?;
+                Ok(upper_chunk as u64 * 100 + lower_chunk as u64)
+            },
+            11 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let mid_chunk = checked_conversion_u16(&u[8..10])?;
+                let lower_chunk = checked_conversion_u8(&u[10..])?;
+                Ok(upper_chunk as u64 * 1_000 + mid_chunk as u64 * 10 + lower_chunk as u64)
+            },
+            12 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let lower_chunk = checked_conversion_u32(&u[8..])?;
+                Ok(upper_chunk as u64 * 10_000 + lower_chunk as u64)
+            },
+            13 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let mid_chunk = checked_conversion_u32(&u[8..12])?;
+                let lower_chunk = checked_conversion_u8(&u[12..])?;
+                Ok(upper_chunk as u64 * 100_000 + mid_chunk as u64 * 10 + lower_chunk as u64)
+            },
+            14 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let mid_chunk = checked_conversion_u32(&u[8..12])?;
+                let lower_chunk = checked_conversion_u16(&u[12..])?;
+                Ok(upper_chunk as u64 * 1_000_000 + mid_chunk as u64 * 100 + lower_chunk as u64)
+            },
+            15 => {
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let mid_chunk = checked_conversion_u32(&u[8..12])?;
+                let lower_chunk = checked_conversion_u16(&u[12..14])?;
+                let last_chunk = checked_conversion_u8(&u[14..])?;
+                
+                let upper = (upper_chunk as u64).wrapping_mul(10_000_000);
+                let mid = mid_chunk as u64 * 1_000;
+                let lower = lower_chunk as u64 * 10;
+                let last = last_chunk as u64;
+                let res = last + lower + mid;
+                if let Some(res) = upper.checked_add(res) {
+                    Ok(res)
+                } else {
+                    Err(CheckError::Overflow)
+                }
+
+            },
+            16 => checked_conversion_u128(u).map(|val| val as u64),
+            17 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u8(&u[16..])?;
+                Ok(upper_chunk as u64 * 10 + lower_chunk as u64)
+            },
+            18 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u16(&u[16..])?;
+                Ok(upper_chunk as u64 * 100 + lower_chunk as u64)
+            },
+            19 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let mid_chunk = checked_conversion_u16(&u[16..18])?;
+                let lower_chunk = checked_conversion_u8(&u[18..])?;
+                let upper = upper_chunk as u64 * 1_000;
+                let mid = mid_chunk as u64 * 10;
+                let lower = lower_chunk as u64;
+                let res = lower + mid;
+                if let Some(res) = upper.checked_add(res) {
+                    Ok(res)
+                } else {
+                    Err(CheckError::Overflow)
+                }
+            },
+            20 => {
+                let upper_chunk = checked_conversion_u128(&u[..16])?;
+                let lower_chunk = checked_conversion_u32(&u[16..])?;
+                let upper = (upper_chunk as u64).wrapping_mul(10_000);
+                if let Some(res) = upper.checked_add(lower_chunk as u64) {
+                    Ok(res)
+                } else {
+                    Err(CheckError::Overflow)
+                }
+            },
+            _ => Err(CheckError::Overflow)
         }
-        
-        if length > 20 {
-            return Err(CheckError::OverFlow(OverFlow));
-        }
-        
-        let mut result= 0;
-        let mut lower = u;
-        
-        if length >= 16 {
-            let upper = &u[..16];
-            let chunk_u128 = le_bytes_to_u128(upper);
-            if !check_decimal_bit_u128(chunk_u128) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            result = sixteen_to_u128(chunk_u128) as u64 * exponent_u64(length - 16);
-            length -= 16;
-            if length > 0 {
-                lower = &u[16..];
-            }
-
-        } 
-
-        if length >= 8 {
-            let upper = &lower[..8];
-            let chunk_u64 = le_bytes_to_u64(upper);
-            if !check_decimal_bit_u64(chunk_u64) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            result += eight_to_u64(chunk_u64) * exponent_u64(length - 8);
-            length -= 8;
-            if length > 0 {
-                lower = &lower[8..];
-            }
-            //
-        } 
-        
-        if length >= 4 {
-            let upper = &lower[..4];
-            let chunk_u32 = le_bytes_to_u32(upper);
-            if !check_decimal_bit_u32(chunk_u32) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            if let Some(res) = result.checked_add(four_to_u32(chunk_u32) as u64 * exponent_u64(length - 4)) {
-                result = res;
-            } else {
-                return Err(CheckError::AdditionOverflow(AdditionOverflow));
-            }
-            length -= 4;
-            if length > 0 {
-                lower = &lower[4..];
-            }
-        } 
-
-        if length >= 2 {
-            let upper = &lower[..2];
-            let chunk_u16 = le_bytes_to_u16(upper);
-            if !check_decimal_bit_u16(chunk_u16) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            
-            result += two_to_u16_decimal(chunk_u16) as u64 * exponent_u64(length - 2);
-
-            length -= 2;
-            if length > 0 {
-                lower = &lower[2..];
-            }
-        } 
-        
-        if length == 1 {
-            let upper = &lower[..1];
-            if !check_decimal_bit_u8(upper[0]) {
-                return Err(CheckError::NonDecimal(NonDecimal));
-            }
-            
-            result += one_to_u8(upper[0]) as u64;
-        } 
-    
-        Ok(result)
     }
 
     pub fn to_u32_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u32, CheckError> {
         let u: &[u8] = input.as_ref();
         let length = u.len();
         if length == 0 {
-            return Err(CheckError::Empty(Empty));
+            return Err(CheckError::Empty)
         }
 
         let mut start = 0;
@@ -259,126 +459,59 @@ impl BiscuitConverter {
         }
         let u = &u[start..];
         let length = length - start;
-        assert!(length <= 10, "to_u32 works only for numbers up to 10 bytes");
+        
         match length {
-            0 => {
-                // We checked empty above, so this means all zeros
-                Ok(0)
-            }
-            1 => {
-                if u[0] >= b'0' && u[0] <= b'9' {
-                    Ok((u[0] - b'0') as u32)
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            },
-            2 => {
-                let chunk = le_bytes_to_u16(u);
-                if check_decimal_bit_u16(chunk) {
-                    Ok(two_to_u16_decimal(chunk) as u32)
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            }
+            0 => Ok(0),
+            1 => checked_conversion_u8(u).map(|val| val as u32),
+            2 => checked_conversion_u16(u).map(|val| val as u32),
             3 => {
-                let upper = le_bytes_to_u16(&u[..2]);
-                if !check_decimal_bit_u16(upper) || !check_decimal_bit_u8(u[2]) {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                } else {
-                    let upper = two_to_u16_decimal(upper) as u32;
-                    let lower = (u[2] - b'0') as u32;
-                    Ok(upper * 10 + lower)
-                }
-            },
-            4 => {
-                let chunk = le_bytes_to_u32(u);
-                if check_decimal_bit_u32(chunk) {
-                    Ok(four_to_u32(chunk))  
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
+                let upper_chunk = checked_conversion_u16(&u[..2])?;
+                let lower_chunk = checked_conversion_u8(&u[2..])?;
+                Ok((upper_chunk as u32) * 10 + lower_chunk as u32)
             }
+            4 => checked_conversion_u32(u),
             5 => {
-                let upper = le_bytes_to_u32(&u[..4]);
-                if !check_decimal_bit_u32(upper) || !check_decimal_bit_u8(u[4]) {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                } else {
-                    let upper = four_to_u32(upper);
-                    let lower = (u[4] - b'0') as u32;
-                    if let Some(res) = (upper * 10).checked_add(lower) {
-                        Ok(res)
-                    } else {
-                        Err(CheckError::AdditionOverflow(AdditionOverflow))
-                    }
-                }
+                let upper_chunk = checked_conversion_u32(&u[..4])?;
+                let lower_chunk = checked_conversion_u8(&u[4..])?;
+                Ok((upper_chunk) as u32 * 10 + lower_chunk as u32)
             },
             6 => {
-                let upper_chunk = le_bytes_to_u32(&u[..4]);
-                let lower_chunk = le_bytes_to_u16(&u[4..]);
-                if !check_decimal_bit_u32(upper_chunk) || !check_decimal_bit_u16(lower_chunk) {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                } else {
-                    let upper = four_to_u32(upper_chunk);
-                    let lower = two_to_u16_decimal(lower_chunk) as u32;
-                    Ok(upper * 100 + lower)
-                }
+                let upper_chunk = checked_conversion_u32(&u[..4])?;
+                let lower_chunk = checked_conversion_u16(&u[4..])?;
+                Ok(upper_chunk as u32 * 100 + lower_chunk as u32)
             },
             7 => {
-                let upper_chunk = le_bytes_to_u32(&u[..4]);
-                let mid_chunk = le_bytes_to_u16(&u[4..6]);
-                let lower_chunk = u[6];
-                if !check_decimal_bit_u32(upper_chunk) || !check_decimal_bit_u16(mid_chunk) || !check_decimal_bit_u8(lower_chunk) {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                } else {
-                    let upper = four_to_u32(upper_chunk);
-                    let mid = two_to_u16_decimal(mid_chunk) as u32;
-                    let lower = (lower_chunk - b'0') as u32;
-                    Ok(upper * 1_000 + mid * 10 + lower)
-                }
+                let upper_chunk = checked_conversion_u32(&u[..4])?;
+                let mid_chunk = checked_conversion_u16(&u[4..6])?;
+                let lower_chunk = checked_conversion_u8(&u[6..])?;
+                Ok(upper_chunk as u32 * 1_000 + mid_chunk as u32 * 10 + lower_chunk as u32)
             },
-            8 => {
-                let chunk = le_bytes_to_u64(u);
-                if check_decimal_bit_u64(chunk) {
-                    Ok(eight_to_u64(chunk) as u32)
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            },
+            8 => checked_conversion_u64(u).map(|val| val as u32),
             9 => {
-                let upper_chunk = le_bytes_to_u64(&u[..8]);
-                let lower_chunk = u[8];
-                if !check_decimal_bit_u64(upper_chunk) || !check_decimal_bit_u8(lower_chunk) {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                } else {
-                    let upper = eight_to_u64(upper_chunk) as u32;
-                    let lower = (lower_chunk - b'0') as u32;
-                    Ok(upper * 10 + lower)
-                }
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let lower_chunk = checked_conversion_u8(&u[8..])?;
+                Ok(upper_chunk as u32 * 10 + lower_chunk as u32)
             },
             10 => {
-                let upper_chunk = le_bytes_to_u64(&u[..8]);
-                let lower_chunk = le_bytes_to_u16(&u[8..]);
-                if !check_decimal_bit_u64(upper_chunk) || !check_decimal_bit_u16(lower_chunk) {
-                    Err(CheckError::NonDecimal(NonDecimal))
+                let upper_chunk = checked_conversion_u64(&u[..8])?;
+                let lower_chunk = checked_conversion_u16(&u[8..])?;
+                let upper = (upper_chunk as u32).wrapping_mul(100);
+                if let Some(res) = upper.checked_add(lower_chunk as u32) {
+                    Ok(res)
                 } else {
-                    let upper = eight_to_u64(upper_chunk) as u32;
-                    let lower = two_to_u16_decimal(lower_chunk) as u32;
-                    if let Some(res) = (upper * 100).checked_add(lower) {
-                        Ok(res)
-                    } else {
-                        Err(CheckError::AdditionOverflow(AdditionOverflow))
-                    }
+                    Err(CheckError::Overflow)
                 }
             },
-            _ => Err(CheckError::OverFlow(OverFlow)),
+            _ => Err(CheckError::Overflow)
         }
     }
+    
     
     pub fn to_u16_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u16, CheckError> {
         let u: &[u8] = input.as_ref();
         let length = u.len();
         if length == 0 {
-            return Err(CheckError::Empty(Empty));
+            return Err(CheckError::Empty)
         }
         let mut start = 0;
         while start < length && u[start] == b'0' {
@@ -386,61 +519,28 @@ impl BiscuitConverter {
         }
         let u = &u[start..];
         let length = length - start;
-        assert!(length <= 5, "to_u32 works only for numbers up to 5 bytes");
 
-        match u.len() {
-            0 => {
-                // We checked empty above, so this means all zeros
-                Ok(0)
-            }
-            1 => {
-                if u[0] >= b'0' && u[0] <= b'9' {
-                    Ok((u[0] - b'0') as u16)
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            },
-            2 => {
-                let chunk = le_bytes_to_u16(u);
-                if check_decimal_bit_u16(chunk) {
-                    Ok(two_to_u16_decimal(chunk))
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            },
+        match length {
+            0 => Ok(0),
+            1 => checked_conversion_u8(u).map(|val| val as u16),
+            2 => checked_conversion_u16(u),
             3 => {
-                let upper = le_bytes_to_u16(&u[..2]);
-                if !(check_decimal_bit_u16(upper) && check_decimal_bit_u8(u[2])) {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                } else {
-                    let upper = two_to_u16_decimal(upper);
-                    let lower = (u[2] - b'0') as u16;
-                    Ok(upper * 10 + lower)
-                }
-            },
-            4 => {
-                let chunk = le_bytes_to_u32(u);
-                if check_decimal_bit_u32(chunk) {
-                    Ok(four_to_u32(chunk) as u16)
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            },
+                let upper_chunk = checked_conversion_u16(&u[..2])?;
+                let lower_chunk = checked_conversion_u8(&u[2..])?;
+                Ok((upper_chunk as u16) * 10 + lower_chunk as u16)
+            }
+            4 => checked_conversion_u32(u).map(|val| val as u16),
             5 => {
-                let upper = le_bytes_to_u32(&u[..4]);
-                if !(check_decimal_bit_u32(upper) && check_decimal_bit_u8(u[4])) {
-                    Err(CheckError::NonDecimal(NonDecimal))
+                let upper_chunk = checked_conversion_u32(&u[..4])?;
+                let lower_chunk = checked_conversion_u8(&u[4..])?;
+                let upper_chunk = (upper_chunk as u16).wrapping_mul(10);
+                if let Some(res) = upper_chunk.checked_add(lower_chunk as u16) {
+                    Ok(res)
                 } else {
-                    let upper = four_to_u32(upper) as u16;
-                    let lower = (u[4] - b'0') as u16;
-                    if let Some(res) = (upper * 10).checked_add(lower) {
-                        Ok(res)
-                    } else {
-                        Err(CheckError::AdditionOverflow(AdditionOverflow))
-                    }
+                    Err(CheckError::Overflow)
                 }
             },
-            _ => Err(CheckError::OverFlow(OverFlow)),
+            _ => Err(CheckError::Overflow)
         }
     }
 
@@ -448,7 +548,7 @@ impl BiscuitConverter {
         let u: &[u8] = input.as_ref();
         let length = u.len();
         if length == 0 {
-            return Err(CheckError::Empty(Empty));
+            return Err(CheckError::Empty)
         }
         let mut start = 0;
         while start < length && u[start] == b'0' {
@@ -456,39 +556,22 @@ impl BiscuitConverter {
         }
         let u = &u[start..];
         let length = length - start;
-        assert!(length <= 3, "to_u32 works only for numbers up to 3 bytes");
 
-        match u.len() {
-            0 => {
-                // We checked empty above, so this means all zeros
-                Ok(0)
-            }
-            1 => {
-                if u[0] >= b'0' && u[0] <= b'9' {
-                    Ok(u[0] - b'0')
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            },
-            2 => {
-                let chunk = le_bytes_to_u16(u);
-                if check_decimal_bit_u16(chunk) {
-                    Ok(two_to_u16_decimal(chunk) as u8)
-                } else {
-                    Err(CheckError::NonDecimal(NonDecimal))
-                }
-            },
+        match length {
+            0 => Ok(0),
+            1 => checked_conversion_u8(u),
+            2 => checked_conversion_u16(u).map(|val| val as u8),
             3 => {
-                let upper = le_bytes_to_u16(&u[..2]);
-                if !(check_decimal_bit_u16(upper) && check_decimal_bit_u8(u[2])) {
-                    Err(CheckError::NonDecimal(NonDecimal))
+                let upper_chunk = checked_conversion_u16(&u[..2])?;
+                let lower_chunk = checked_conversion_u8(&u[2..])?;
+                let upper_chunk = (upper_chunk as u8).wrapping_mul(10);
+                if let Some(res) = upper_chunk.checked_add(lower_chunk as u8) {
+                    Ok(res)
                 } else {
-                    let upper = two_to_u16_decimal(upper) as u8;
-                    let lower = u[2] - b'0';
-                    Ok(upper * 10 + lower)
+                    Err(CheckError::Overflow)
                 }
-            },
-            _ => Err(CheckError::OverFlow(OverFlow)),
+            }
+            _ => Err(CheckError::Overflow),
         }
     }
 }

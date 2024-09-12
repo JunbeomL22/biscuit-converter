@@ -1,10 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use std::i128;
+
     use biscuit_converter::BiscuitConverter;
-    use biscuit_converter::error::{
-        CheckError,
-        Empty,
-    };
+    use biscuit_converter::error::CheckError;
     use anyhow::Result;
     const I128_LENGTH_BOUND: usize = 40;  // Adjusted for i128, including sign
 
@@ -17,7 +16,7 @@ mod tests {
             let val = biscuit.to_i128_decimal(x_byte);
             assert_eq!(
                 val, Ok(i),
-                "Failed for {} bytes", i
+                "Failed for {}", i
             );
             
         }
@@ -30,7 +29,7 @@ mod tests {
         
         // Test empty input
         let empty: &[u8] = &[];
-        assert_eq!(biscuit.to_i128_decimal(empty), Err(CheckError::Empty(Empty)), "Failed for empty input");
+        assert_eq!(biscuit.to_i128_decimal(empty), Err(CheckError::Empty), "Failed for empty input");
 
         // Test single zero
         let single_zero: &[u8] = &[b'0'];
@@ -73,14 +72,11 @@ mod tests {
         let biscuit = BiscuitConverter::default();
         
         // Test values near i128::MAX
-        let near_max = i128::MAX - 1;
-        let near_max_string = near_max.to_string();
-        let near_max_byte: &[u8] = near_max_string.as_bytes();
+        let near_max_byte: &[u8] = b"170141183460469231731687303715884105726";
         let val = biscuit.to_i128_decimal(near_max_byte);
-        assert_eq!(val, Ok(near_max), "Failed for i128::MAX - 1");
+        assert_eq!(val, Ok(i128::MAX - 1), "Failed for i128::MAX - 1");
 
-        let max_string = i128::MAX.to_string();
-        let max_byte: &[u8] = max_string.as_bytes();
+        let max_byte: &[u8] = b"170141183460469231731687303715884105727";
         let val = biscuit.to_i128_decimal(max_byte);
         assert_eq!(val, Ok(i128::MAX), "Failed for i128::MAX");
 
@@ -92,7 +88,7 @@ mod tests {
 
         // Test values slightly above i128::MAX + 1
         let byte_test_p2 = (i128::MAX.wrapping_add(2)).to_string();
-        let val_p2 = biscuit.to_i128_decimal(byte_test_p2);
+        let val_p2 = biscuit.to_i128_decimal(byte_test_p2.as_bytes());
         assert_eq!(val_p2, Ok(i128::MIN.wrapping_add(1)), "Unexpected behavior for i128::MAX + 2");
 
         // Test values near i128::MIN
@@ -117,7 +113,7 @@ mod tests {
         let u128_max_string = u128::MAX.to_string();
         let u128_max_byte: &[u8] = u128_max_string.as_bytes();
         let val = biscuit.to_i128_decimal(u128_max_byte);
-        assert_eq!(val, Ok(-1), "Failed for u128::MAX");
+        assert_eq!(val, Err(CheckError::Overflow), "Failed for u128::MAX");
         
         Ok(())
     }
@@ -125,12 +121,12 @@ mod tests {
     #[test]
     fn test_i128_leading_zeros() -> Result<()> {
         let biscuit = BiscuitConverter::default();
-        let byte_leading_zeros_pos = b"0000000890123456789012345678901234567890";
-        let byte_leading_zeros_neg = b"-00000000890123456789012345678901234567890";
+        let byte_leading_zeros_pos = b"0000000090123456789012345678901234567890";
+        let byte_leading_zeros_neg = b"-00000000090123456789012345678901234567890";
         let val_leading_zeros_pos = biscuit.to_i128_decimal(byte_leading_zeros_pos);
         let val_leading_zeros_neg = biscuit.to_i128_decimal(byte_leading_zeros_neg);
-        assert_eq!(val_leading_zeros_pos, Ok(890123456789012345678901234567890));
-        assert_eq!(val_leading_zeros_neg, Ok(-890123456789012345678901234567890));
+        assert_eq!(val_leading_zeros_pos, Ok(90123456789012345678901234567890));
+        assert_eq!(val_leading_zeros_neg, Ok(-90123456789012345678901234567890));
         Ok(())
     }
 

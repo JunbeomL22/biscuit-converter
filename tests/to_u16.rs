@@ -1,12 +1,7 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
-    use biscuit_converter::error::{
-        CheckError,
-        Empty, 
-        OverFlow,
-        AdditionOverflow,
-    };
+    use biscuit_converter::error::CheckError;
 
     use anyhow::Result;
     const U16_LENGTH_BOUND: usize = 5;  // Adjusted for u16
@@ -73,7 +68,7 @@ mod tests {
         let x_n1: &[u8] = &byte_test_n1[..];
         let val_p1 = biscuit.to_u16_decimal(x_p1);
         let val_n1 = biscuit.to_u16_decimal(x_n1);
-        assert_eq!(val_p1, Err(CheckError::AdditionOverflow(AdditionOverflow)));
+        assert_eq!(val_p1, Err(CheckError::Overflow));
         assert_eq!(val_n1, Ok(u16::MAX - 1));
         Ok(())
     }

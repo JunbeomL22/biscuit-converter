@@ -1,10 +1,6 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
-    use biscuit_converter::error::{
-        CheckError,
-        Empty,
-    };
     use anyhow::Result;
 
     #[test]

@@ -1,11 +1,7 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
-    use biscuit_converter::error::{
-        Empty,
-        CheckError,
-        OverFlow,
-    };
+    use biscuit_converter::error::CheckError;
     use anyhow::Result;
     const U32_LENGTH_BOUND: usize = 10;  // Adjusted for u32
 
@@ -32,7 +28,7 @@ mod tests {
             let x: &[u8] = &x_vec[..];
             let val = biscuit.to_u32_decimal(x);
             assert_eq!(
-                val, Err(CheckError::Empty(Empty)),
+                val, Ok(0),
                 "Failed for {} bytes", i
             );
         }
@@ -71,7 +67,7 @@ mod tests {
         let x_n1: &[u8] = &byte_test_n1[..];
         let val_p1 = biscuit.to_u32_decimal(x_p1);
         let val_n1 = biscuit.to_u32_decimal(x_n1);
-        assert_eq!(val_p1, Err(CheckError::OverFlow(OverFlow)));
+        assert_eq!(val_p1, Err(CheckError::Overflow));
         assert_eq!(val_n1, Ok(u32::MAX - 1));
         Ok(())
     }

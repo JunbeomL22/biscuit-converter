@@ -1,10 +1,7 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
-    use biscuit_converter::error::{
-        CheckError,
-        Empty,
-    };
+    use biscuit_converter::error::CheckError;
     use anyhow::Result;
     const I32_LENGTH_BOUND: usize = 11;  // Adjusted for i32, including sign
 
@@ -74,13 +71,13 @@ mod tests {
         let val = biscuit.to_i32_decimal(min_byte);
         assert_eq!(val, Ok(i32::MIN));
         
-        // Test overflow
+        // Test Overflow
         let byte_test_p1 = b"2147483648";  // i32::MAX + 1
         let byte_test_n1 = b"-2147483649";  // i32::MIN - 1
         let val_p1 = biscuit.to_i32_decimal(byte_test_p1);
         let val_n1 = biscuit.to_i32_decimal(byte_test_n1);
-        assert_eq!(val_p1.unwrap(), -2147483648);
-        assert_eq!(val_n1.unwrap(), 2147483647);
+        assert_eq!(val_p1, Err(CheckError::Overflow));
+        assert_eq!(val_n1, Err(CheckError::Overflow));
         
         Ok(())
     }

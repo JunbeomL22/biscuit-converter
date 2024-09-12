@@ -1,7 +1,59 @@
+use crate::error::CheckError;
+
+#[inline]
+pub(crate) fn checked_conversion_u8(input: &[u8]) -> Result<u8, CheckError> {
+    if input[0] >= 0x30 && input[0] <= 0x39 {
+        Ok(input[0] - 0x30)
+    } else {
+        Err(CheckError::NonDecimal)
+    }
+}
+
+#[inline]
+pub(crate) fn checked_conversion_u16(input: &[u8]) -> Result<u16, CheckError> {
+    let chunk = le_bytes_to_u16(input);
+    if check_decimal_bit_u16(chunk) {
+        Ok(two_to_u16_decimal(chunk))
+    } else {
+        Err(CheckError::NonDecimal)
+    }
+}
+
+#[inline]
+pub(crate) fn checked_conversion_u32(input: &[u8]) -> Result<u32, CheckError> {
+    let chunk = le_bytes_to_u32(input);
+    if check_decimal_bit_u32(chunk) {
+        Ok(four_to_u32(chunk))
+    } else {
+        Err(CheckError::NonDecimal)
+    }
+}
+
+#[inline]
+pub(crate) fn checked_conversion_u64(input: &[u8]) -> Result<u64, CheckError> {
+    let chunk = le_bytes_to_u64(input);
+    if check_decimal_bit_u64(chunk) {
+        Ok(eight_to_u64(chunk))
+    } else {
+        Err(CheckError::NonDecimal)
+    }
+    
+}
+
+#[inline]
+pub(crate) fn checked_conversion_u128(input: &[u8]) -> Result<u128, CheckError> {
+    let chunk = le_bytes_to_u128(input);
+    if check_decimal_bit_u128(chunk) {
+        Ok(sixteen_to_u128(chunk))
+    } else {
+        Err(CheckError::NonDecimal)
+    }
+}
+
 // from_le_bytes version for u128 (up to 16 bytes)
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn le_bytes_to_u128(input: &[u8]) -> u128 {
+pub(crate) fn le_bytes_to_u128(input: &[u8]) -> u128 {
     let mut bytes = [0u8; 16];
     let start = 16 - input.len();
     bytes[start..].copy_from_slice(input);
@@ -9,9 +61,9 @@ pub fn le_bytes_to_u128(input: &[u8]) -> u128 {
 }
 
 // from_le_bytes version for u64 (up to 8 bytes)
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn le_bytes_to_u64(input: &[u8]) -> u64 {
+pub(crate) fn le_bytes_to_u64(input: &[u8]) -> u64 {
     let mut bytes = [0u8; 8];
     let start = 8 - input.len();
     bytes[start..].copy_from_slice(input);
@@ -19,9 +71,9 @@ pub fn le_bytes_to_u64(input: &[u8]) -> u64 {
 }
 
 // from_le_bytes version for u32 (up to 4 bytes)
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn le_bytes_to_u32(input: &[u8]) -> u32 {
+pub(crate) fn le_bytes_to_u32(input: &[u8]) -> u32 {
     let mut bytes = [0u8; 4];
     let start = 4 - input.len();
     bytes[start..].copy_from_slice(input);
@@ -29,30 +81,25 @@ pub fn le_bytes_to_u32(input: &[u8]) -> u32 {
 }
 
 // from_le_bytes version for u16 (up to 2 bytes)
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn le_bytes_to_u16(input: &[u8]) -> u16 {
+pub(crate) fn le_bytes_to_u16(input: &[u8]) -> u16 {
     let mut bytes = [0u8; 2];
     let start = 2 - input.len();
     bytes[start..].copy_from_slice(input);
     u16::from_le_bytes(bytes)
 }
 
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn two_to_u16_decimal(chunk: u16) -> u16 {
+pub(crate) fn two_to_u16_decimal(chunk: u16) -> u16 {
     ((chunk & 0x0f00) >> 8) + (chunk & 0x000f) * 10
 }
 
-#[inline(always)]
-#[must_use]
-pub fn one_to_u8(chunk: u8) -> u8 {
-    chunk - 0x30    
-}
 
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn four_to_u32(mut chunk: u32) -> u32 {
+pub(crate) fn four_to_u32(mut chunk: u32) -> u32 {
     //chunk <<= 32 - length * 8;
     let lower_digits = (chunk & 0x0f000f00) >> 8;
     let upper_digits = (chunk & 0x000f000f) * 10;
@@ -66,9 +113,9 @@ pub fn four_to_u32(mut chunk: u32) -> u32 {
     chunk
 }
 
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn eight_to_u64(mut chunk: u64) -> u64 {
+pub(crate) fn eight_to_u64(mut chunk: u64) -> u64 {
     //chunk <<= 64 - length * 8;
 
     let lower_digits = (chunk & 0x0f000f000f000f00) >> 8;
@@ -88,9 +135,9 @@ pub fn eight_to_u64(mut chunk: u64) -> u64 {
     chunk
 }
 
-#[inline(always)]
+#[inline]
 #[must_use]
-pub fn sixteen_to_u128(mut chunk: u128) -> u128 {
+pub(crate) fn sixteen_to_u128(mut chunk: u128) -> u128 {
     let lower_digits = (chunk & 0x0f000f000f000f000f000f000f000f00) >> 8;
     let upper_digits = (chunk & 0x000f000f000f000f000f000f000f000f) * 10;
     chunk = lower_digits + upper_digits;
@@ -110,23 +157,13 @@ pub fn sixteen_to_u128(mut chunk: u128) -> u128 {
     chunk
 }
 
-pub fn check_decimal(input: &[u8]) -> bool {
-    input.iter().all(|&x| (b'0'..=b'9').contains(&x))
-}
-
-#[inline]
-#[must_use]
-pub fn check_decimal_bit_u8(chunk: u8) -> bool {
-    (0x30..=0x39).contains(&chunk)
-}
-
 const ZERO_COMPLEMENT_U16: u16 = 0x00CF;
 const NINE_COMPLEMENT_U16: u16 = 0x00C6;
 const CHECKER_MASK_U16: u16 = 0xFF00;
 
 #[inline]
 #[must_use]
-pub fn check_decimal_bit_u16(chunk: u16) -> bool {
+pub(crate) fn check_decimal_bit_u16(chunk: u16) -> bool {
     let lower_upper_check = (((chunk & 0x00FF) + NINE_COMPLEMENT_U16) & CHECKER_MASK_U16) == 0;
     let lower_lower_check = (((0x00FF - (chunk & 0x00FF)) + ZERO_COMPLEMENT_U16) & CHECKER_MASK_U16) != 0;
     
@@ -142,7 +179,7 @@ const CHECKER_MASK_U32: u32 = 0xFF00FF00;
 
 #[inline]
 #[must_use]
-pub fn check_decimal_bit_u32(chunk: u32) -> bool {
+pub(crate) fn check_decimal_bit_u32(chunk: u32) -> bool {
     let lower_upper_check = (((chunk & 0x00FF00FF) + NINE_COMPLEMENT_U32) & CHECKER_MASK_U32) == 0;
     let lower_lower_check = (((0x00FF00FF - (chunk & 0x00FF00FF)) + ZERO_COMPLEMENT_U32) & CHECKER_MASK_U32) != 0;
     
@@ -158,7 +195,7 @@ const CHECKER_MASK_U64: u64 = 0xFF00FF00FF00FF00;
 
 #[inline]
 #[must_use]
-pub fn check_decimal_bit_u64(chunk: u64) -> bool {
+pub(crate) fn check_decimal_bit_u64(chunk: u64) -> bool {
     let lower_upper_check = (((chunk & 0x00FF00FF00FF00FF) + NINE_COMPLEMENT_U64) & CHECKER_MASK_U64) == 0;
     let lower_lower_check = (((0x00FF00FF00FF00FF - (chunk & 0x00FF00FF00FF00FF)) + ZERO_COMPLEMENT_U64) & CHECKER_MASK_U64) != 0;
     
@@ -174,7 +211,7 @@ const CHECKER_MASK_U128: u128 = 0xFF00FF00FF00FF00FF00FF00FF00FF00;
 
 #[inline]
 #[must_use]
-pub fn check_decimal_bit_u128(chunk: u128) -> bool {
+pub(crate) fn check_decimal_bit_u128(chunk: u128) -> bool {
     let lower_upper_check = (((chunk & 0x00FF00FF00FF00FF00FF00FF00FF00FF) + NINE_COMPLEMENT_U128) & CHECKER_MASK_U128) == 0;
     let lower_lower_check = (((0x00FF00FF00FF00FF00FF00FF00FF00FF - (chunk & 0x00FF00FF00FF00FF00FF00FF00FF00FF)) + ZERO_COMPLEMENT_U128) & CHECKER_MASK_U128) != 0;
     
@@ -187,6 +224,25 @@ pub fn check_decimal_bit_u128(chunk: u128) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    pub(crate) fn check_decimal(input: &[u8]) -> bool {
+        input.iter().all(|&x| (b'0'..=b'9').contains(&x))
+    }
+    
+    #[inline]
+    #[must_use]
+    pub(crate) fn check_decimal_bit_u8(chunk: u8) -> bool {
+        (0x30..=0x39).contains(&chunk)
+    }
+
+    #[inline]
+    #[must_use]
+    pub(crate) fn one_to_u8(chunk: u8) -> u8 {
+        if chunk < 0x30 || chunk > 0x39 {
+            return 0;
+        }
+        chunk - 0x30    
+    }
 
     #[test]
     fn test_check_decimal() {

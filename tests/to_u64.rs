@@ -1,10 +1,7 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
-    use biscuit_converter::error::{
-        CheckError,
-        OverFlow,
-    };
+    use biscuit_converter::error::CheckError;
     use anyhow::Result;
 
     const U64_LENGTH_BOUND: usize = 20;
@@ -30,6 +27,7 @@ mod tests {
         for i in 1..U64_LENGTH_BOUND {
             let x_vec: Vec<u8> = vec![b'0'; i];
             let x: &[u8] = &x_vec[..];
+            println!("{}", i);
             let val = biscuit.to_u64_decimal(x);
             assert_eq!(
                 val, Ok(0),
@@ -78,7 +76,7 @@ mod tests {
         let val_p1 = biscuit.to_u64_decimal(x_p1);
         let val_n1 = biscuit.to_u64_decimal(x_n1);
 
-        assert_eq!(val_p1, Err(CheckError::OverFlow(OverFlow)));
+        assert_eq!(val_p1, Err(CheckError::Overflow));
         assert_eq!(val_n1, Ok(u64::MAX - 1));
 
         Ok(())

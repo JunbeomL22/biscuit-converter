@@ -1,10 +1,7 @@
 #[cfg(test)]
 mod tests {
     use biscuit_converter::BiscuitConverter;
-    use biscuit_converter::error::{
-        CheckError,
-        Empty,
-    };
+    use biscuit_converter::error::CheckError;
     use anyhow::Result;
     const I64_LENGTH_BOUND: usize = 20;  // Adjusted for i64, including sign
 
@@ -36,7 +33,7 @@ mod tests {
         
         // Test empty input
         let empty: &[u8] = &[];
-        assert_eq!(biscuit.to_i64_decimal(empty), Err(CheckError::Empty(Empty)), "Failed for empty input");
+        assert_eq!(biscuit.to_i64_decimal(empty), Err(CheckError::Empty), "Failed for empty input");
 
         // Test single zero
         let single_zero: &[u8] = &[b'0'];
@@ -61,6 +58,7 @@ mod tests {
                 "Failed for {} bytes", i
             );
         }
+
         for i in 1..(I64_LENGTH_BOUND-1) {
             let x_vec: Vec<u8> = vec![b'9'; i];
             let x: &[u8] = &x_vec[..];
@@ -115,13 +113,13 @@ mod tests {
         // Test wrapping behavior at i64::MIN - 1
         let byte_test_n1 = b"-9223372036854775809";  // i64::MIN - 1
         let val_n1 = biscuit.to_i64_decimal(byte_test_n1);
-        assert_eq!(val_n1, Ok(i64::MAX), "Unexpected behavior for i64::MIN - 1");
+        assert_eq!(val_n1, Err(CheckError::Overflow), "Unexpected behavior for i64::MIN - 1");
         
         // Test u64::MAX (should be interpreted as -1 in two's complement)
         let u64_max_string = u64::MAX.to_string();
         let u64_max_byte: &[u8] = u64_max_string.as_bytes();
         let val = biscuit.to_i64_decimal(u64_max_byte);
-        assert_eq!(val, Ok(-1), "Failed for u64::MAX");
+        assert_eq!(val, Err(CheckError::Overflow), "Failed for u64::MAX");
         
         Ok(())
     }

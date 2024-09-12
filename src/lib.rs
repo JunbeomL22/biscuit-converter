@@ -83,9 +83,9 @@
 //! 
 //! let biscuit_converter = BiscuitConverter::default();
 //! // Parsing examples
-//! let u64_result: Option<u64> = biscuit_converter.to_u64("123");
+//! let u64_result = biscuit_converter.to_u64_decimal(b"123");
 //! assert_eq!(u64_result, Ok(123));
-//! let i64_result: Option<i64> = biscuit_converter.to_i64("-123");
+//! let i64_result = biscuit_converter.to_i64_decimal(b"-123");
 //! assert_eq!(i64_result, Ok(-123));
 //! 
 //! ```
@@ -106,8 +106,49 @@ pub mod unsigned_decimal;
 pub mod little_endian_decimal;
 pub mod integer_decimal;
 pub mod error;
-pub mod exponent;
 /// Parser for decimal notation
 /// It can not parse scientific notation
 #[derive(Debug, Clone, Copy, Default)]
 pub struct BiscuitConverter {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::error::CheckError;
+    use anyhow::Result;
+
+    #[test]
+    fn test_base() -> Result<()> {
+        let bsc = BiscuitConverter::default();
+        let err_overflow = bsc.to_i32_decimal(b"1234567890123");
+        assert_eq!(err_overflow.unwrap_err().as_str(), "Overflow");
+
+        let val_i64 = bsc.to_i64_decimal(b"1234567890123")?;
+        assert_eq!(val_i64, 1234567890123);
+
+        let err_nondecimal = bsc.to_i32_decimal(b"123a");
+        assert_eq!(err_nondecimal, Err(CheckError::NonDecimal));
+
+        let err_empty = bsc.to_i32_decimal(b"");
+        assert_eq!(err_empty, Err(CheckError::Empty));
+
+        let u128_max_str = b"340282366920938463463374607431768211455";
+        let val_u128_max = bsc.to_u128_decimal(u128_max_str)?;
+        assert_eq!(val_u128_max, u128::MAX);
+
+        let u128_overflow_str = b"340282366920938463463374607431768211456";
+        let err_u128_overflow = bsc.to_u128_decimal(u128_overflow_str);
+        assert_eq!(err_u128_overflow, Err(CheckError::Overflow));
+        
+        let i128_max_str = b"170141183460469231731687303715884105727";
+        let val_i128_max = bsc.to_i128_decimal(i128_max_str)?;
+        assert_eq!(val_i128_max, i128::MAX);
+
+        let i128_overflow_str = b"170141183460469231731687303715884105728";
+        let i128_overflowed_value = bsc.to_i128_decimal(i128_overflow_str);
+        // it is under the maximum of u128 
+        assert_eq!(i128_overflowed_value, Err(CheckError::Overflow));
+        
+        Ok(())
+    }
+}

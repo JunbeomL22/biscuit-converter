@@ -28,7 +28,7 @@ fn bench_i64(c: &mut Criterion) {
     for input_str in test_set {
         let mut group = c.benchmark_group(format!("i64 : {}", input_str));
         let input = input_str.as_bytes();
-        group.bench_function("biscuit", |b| b.iter(|| biscuit_converter.to_i64(black_box(input))));
+        group.bench_function("biscuit", |b| b.iter(|| biscuit_converter.to_i64_decimal(black_box(input))));
         group.bench_function("std", |b| b.iter(|| black_box(input_str).parse::<i64>().unwrap()));
         group.bench_function("atoi", |b| b.iter(|| atoi::<i64>(black_box(input)).unwrap()));
         group.finish();
