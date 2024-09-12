@@ -9,8 +9,25 @@ use crate::little_endian_decimal::{
     checked_conversion_u128,
 };
 
+// to handle integer converter overflow
+const I128_MAX_AS_U128: u128 = 170141183460469231731687303715884105727;
+const I128_MIN_ABS_AS_U128: u128 = 170141183460469231731687303715884105728;
+const I64_MAX_AS_U64: u64 = 9223372036854775807;
+const I64_MIN_ABS_AS_U64: u64 = 9223372036854775808;
+const I32_MAX_AS_U32: u32 = 2147483647;
+const I32_MIN_ABS_AS_U32: u32 = 2147483648;
+const I16_MAX_AS_U16: u16 = 32767;
+const I16_MIN_ABS_AS_U16: u16 = 32768;
+const I8_MAX_AS_U8: u8 = 127;
+const I8_MIN_ABS_AS_U8: u8 = 128;
+
 impl BiscuitConverter {
+    #[inline]
     pub fn to_u128_decimal(self, u: &[u8]) -> Result<u128, CheckError> {
+        self.to_u128_decimal_core(u, false, false)
+    }
+
+    pub fn to_u128_decimal_core(self, u: &[u8], neg_max_check: bool, pos_max_check: bool) -> Result<u128, CheckError> {
         let mut length = u.len();
         if length == 0 {
             return Err(CheckError::Empty)
@@ -306,7 +323,13 @@ impl BiscuitConverter {
                 let tail = tail_chunk * 10;
                 let res = mid + lower + tail + last;
                 if let Some(res) = upper.checked_add(res) {
-                    Ok(res)
+                    if neg_max_check && res > I128_MIN_ABS_AS_U128 {
+                        Err(CheckError::Overflow)
+                    } else if pos_max_check && res > I128_MAX_AS_U128 {
+                        Err(CheckError::Overflow)
+                    } else {
+                        Ok(res)
+                    }
                 } else {
                     Err(CheckError::Overflow)
                 }
@@ -316,8 +339,12 @@ impl BiscuitConverter {
  
     }
 
-    pub fn to_u64_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u64, CheckError> {
-        let u = input.as_ref();
+    #[inline]
+    pub fn to_u64_decimal(self, u: &[u8]) -> Result<u64, CheckError> {
+        self.to_u64_decimal_core(u, false, false)
+    }
+
+    pub fn to_u64_decimal_core(self, u: &[u8], neg_max_check: bool, pos_max_check: bool) -> Result<u64, CheckError> {
         let mut length = u.len();
         if length == 0 {
             return Err(CheckError::Empty)
@@ -427,7 +454,13 @@ impl BiscuitConverter {
                 let lower = lower_chunk as u64;
                 let res = lower + mid;
                 if let Some(res) = upper.checked_add(res) {
-                    Ok(res)
+                    if neg_max_check && res > I64_MIN_ABS_AS_U64 {
+                        Err(CheckError::Overflow)
+                    } else if pos_max_check && res > I64_MAX_AS_U64 {
+                        Err(CheckError::Overflow)
+                    } else {
+                        Ok(res)
+                    }
                 } else {
                     Err(CheckError::Overflow)
                 }
@@ -437,7 +470,13 @@ impl BiscuitConverter {
                 let lower_chunk = checked_conversion_u32(&u[16..])?;
                 let upper = (upper_chunk as u64).wrapping_mul(10_000);
                 if let Some(res) = upper.checked_add(lower_chunk as u64) {
-                    Ok(res)
+                    if neg_max_check && res > I64_MIN_ABS_AS_U64 {
+                        Err(CheckError::Overflow)
+                    } else if pos_max_check && res > I64_MAX_AS_U64 {
+                        Err(CheckError::Overflow)
+                    } else {
+                        Ok(res)
+                    }
                 } else {
                     Err(CheckError::Overflow)
                 }
@@ -446,8 +485,12 @@ impl BiscuitConverter {
         }
     }
 
-    pub fn to_u32_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u32, CheckError> {
-        let u: &[u8] = input.as_ref();
+    #[inline]
+    pub fn to_u32_decimal(self, u: &[u8]) -> Result<u32, CheckError> {
+        self.to_u32_decimal_core(u, false, false)
+    }
+
+    pub fn to_u32_decimal_core(self, u: &[u8], neg_max_check: bool, pos_max_check: bool) -> Result<u32, CheckError> {
         let length = u.len();
         if length == 0 {
             return Err(CheckError::Empty)
@@ -497,7 +540,13 @@ impl BiscuitConverter {
                 let lower_chunk = checked_conversion_u16(&u[8..])?;
                 let upper = (upper_chunk as u32).wrapping_mul(100);
                 if let Some(res) = upper.checked_add(lower_chunk as u32) {
-                    Ok(res)
+                    if neg_max_check && res > I32_MIN_ABS_AS_U32 {
+                        Err(CheckError::Overflow)
+                    } else if pos_max_check && res > I32_MAX_AS_U32 {
+                        Err(CheckError::Overflow)
+                    } else {
+                        Ok(res)
+                    }
                 } else {
                     Err(CheckError::Overflow)
                 }
@@ -506,9 +555,12 @@ impl BiscuitConverter {
         }
     }
     
-    
-    pub fn to_u16_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u16, CheckError> {
-        let u: &[u8] = input.as_ref();
+    #[inline]
+    pub fn to_u16_decimal(self, u: &[u8]) -> Result<u16, CheckError> {
+        self.to_u16_decimal_core(u, false, false)
+    }
+
+    pub fn to_u16_decimal_core(self, u: &[u8], neg_max_check: bool, pos_max_check: bool) -> Result<u16, CheckError> {
         let length = u.len();
         if length == 0 {
             return Err(CheckError::Empty)
@@ -535,7 +587,13 @@ impl BiscuitConverter {
                 let lower_chunk = checked_conversion_u8(&u[4..])?;
                 let upper_chunk = (upper_chunk as u16).wrapping_mul(10);
                 if let Some(res) = upper_chunk.checked_add(lower_chunk as u16) {
-                    Ok(res)
+                    if neg_max_check && res > I16_MIN_ABS_AS_U16 {
+                        Err(CheckError::Overflow)
+                    } else if pos_max_check && res > I16_MAX_AS_U16 {
+                        Err(CheckError::Overflow)
+                    } else {
+                        Ok(res)
+                    }
                 } else {
                     Err(CheckError::Overflow)
                 }
@@ -544,8 +602,12 @@ impl BiscuitConverter {
         }
     }
 
-    pub fn to_u8_decimal<T: AsRef<[u8]>>(self, input: T) -> Result<u8, CheckError> {
-        let u: &[u8] = input.as_ref();
+    #[inline]
+    pub fn to_u8_decimal(self, u: &[u8]) -> Result<u8, CheckError> {
+        self.to_u8_decimal_core(u, false, false)
+    }
+
+    pub fn to_u8_decimal_core(self, u: &[u8], neg_max_check: bool, pos_max_check: bool) -> Result<u8, CheckError> {
         let length = u.len();
         if length == 0 {
             return Err(CheckError::Empty)
@@ -566,7 +628,13 @@ impl BiscuitConverter {
                 let lower_chunk = checked_conversion_u8(&u[2..])?;
                 let upper_chunk = (upper_chunk as u8).wrapping_mul(10);
                 if let Some(res) = upper_chunk.checked_add(lower_chunk as u8) {
-                    Ok(res)
+                    if neg_max_check && res > I8_MIN_ABS_AS_U8 {
+                        Err(CheckError::Overflow)
+                    } else if pos_max_check && res > I8_MAX_AS_U8 {
+                        Err(CheckError::Overflow)
+                    } else {
+                        Ok(res)
+                    }
                 } else {
                     Err(CheckError::Overflow)
                 }

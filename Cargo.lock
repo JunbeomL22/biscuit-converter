@@ -51,6 +51,7 @@ dependencies = [
  "anyhow",
  "atoi",
  "criterion",
+ "num-traits",
 ]
 
 [[package]]

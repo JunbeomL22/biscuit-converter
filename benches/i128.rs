@@ -1,10 +1,18 @@
 use criterion::{criterion_group, criterion_main, Criterion, black_box};
 use biscuit_converter::BiscuitConverter;
 use atoi::atoi;
+use atoi::FromRadix10Signed;
 
 fn bench_i128(c: &mut Criterion) {
     let bis = BiscuitConverter::default();
     let test_set = vec![
+        "-123456789012345678901234567890123",
+        "-1234567890123456789012345678901234",
+        "-12345678901234567890123456789012345",
+        "-123456789012345678901234567890123456",
+        "-1234567890123456789012345678901234567",
+        "-12345678901234567890123456789012345678",
+        "-123456789012345678901234567890123456789",
         "-1",
         "-12",
         "-123", 
@@ -37,13 +45,6 @@ fn bench_i128(c: &mut Criterion) {
         "-123456789012345678901234567890",
         "-1234567890123456789012345678901",
         "-12345678901234567890123456789012",
-        "-123456789012345678901234567890123",
-        "-1234567890123456789012345678901234",
-        "-12345678901234567890123456789012345",
-        "-123456789012345678901234567890123456",
-        "-1234567890123456789012345678901234567",
-        "-12345678901234567890123456789012345678",
-        "-123456789012345678901234567890123456789",
     ];
 
     for input_str in test_set {
@@ -51,7 +52,7 @@ fn bench_i128(c: &mut Criterion) {
         let input = input_str.as_bytes();
         group.bench_function("biscuit", |b| b.iter(|| bis.to_i128_decimal(black_box(input)).unwrap()));
         group.bench_function("std", |b| b.iter(|| black_box(input_str).parse::<i128>().unwrap()));
-        group.bench_function("atoi", |b| b.iter(|| atoi::<i128>(black_box(input)).unwrap()));
+        group.bench_function("atoi", |b| b.iter(|| i128::from_radix_10_signed(input).0));
         group.finish();
     }
 }

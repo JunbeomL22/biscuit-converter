@@ -6,7 +6,6 @@ use atoi::atoi;
 
 fn bench_u64(c: &mut Criterion) {
     let biscuit_converter = BiscuitConverter::default();
-    let input_string = u64::MAX.to_string();
     
     let test_vec = vec![
         "1",

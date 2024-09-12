@@ -12,6 +12,19 @@ keywords = ["parser", "numeric-parser", "fast", "safe", "bit-operation"]
 criterion = "0.5"
 atoi = "2.0"
 anyhow = "1.0"
+num-traits = "0.2"
+
+[[bench]]
+name = "i8"
+harness = false
+
+[[bench]]
+name = "i16"
+harness = false
+
+[[bench]]
+name = "i32"
+harness = false
 
 [[bench]]
 name = "i64"

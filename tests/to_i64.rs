@@ -91,12 +91,12 @@ mod tests {
         // Test wrapping behavior at i64::MAX + 1
         let byte_test_p1 = b"9223372036854775808";  // i64::MAX + 1
         let val_p1 = biscuit.to_i64_decimal(byte_test_p1);
-        assert_eq!(val_p1, Ok(i64::MIN), "Unexpected behavior for i64::MAX + 1");
+        assert_eq!(val_p1, Err(CheckError::Overflow), "Unexpected behavior for i64::MAX + 1");
 
         // Test values slightly above i64::MAX + 1
         let byte_test_p2 = b"9223372036854775809";  // i64::MAX + 2
         let val_p2 = biscuit.to_i64_decimal(byte_test_p2);
-        assert_eq!(val_p2, Ok(i64::MIN + 1), "Unexpected behavior for i64::MAX + 2");
+        assert_eq!(val_p2, Err(CheckError::Overflow), "Unexpected behavior for i64::MAX + 2");
 
         // Test values near i64::MIN
         let near_min = i64::MIN + 1;

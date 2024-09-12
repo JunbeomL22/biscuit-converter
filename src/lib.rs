@@ -106,6 +106,8 @@ pub mod unsigned_decimal;
 pub mod little_endian_decimal;
 pub mod integer_decimal;
 pub mod error;
+pub mod utils;
+pub mod little_endian_hexa;
 /// Parser for decimal notation
 /// It can not parse scientific notation
 #[derive(Debug, Clone, Copy, Default)]
@@ -116,18 +118,22 @@ mod tests {
     use super::*;
     use crate::error::CheckError;
     use anyhow::Result;
+    use atoi::atoi;
 
     #[test]
     fn test_base() -> Result<()> {
         let bsc = BiscuitConverter::default();
         let err_overflow = bsc.to_i32_decimal(b"1234567890123");
-        assert_eq!(err_overflow.unwrap_err().as_str(), "Overflow");
+        assert_eq!(err_overflow, Err(CheckError::Overflow));
 
-        let val_i64 = bsc.to_i64_decimal(b"1234567890123")?;
-        assert_eq!(val_i64, 1234567890123);
+        let val_i64 = bsc.to_i64_decimal(b"1234567890123");
+        assert_eq!(val_i64, Ok(1234567890123));
 
-        let err_nondecimal = bsc.to_i32_decimal(b"123a");
-        assert_eq!(err_nondecimal, Err(CheckError::NonDecimal));
+        let nondecimal = bsc.to_i32_decimal(b"123a");
+        assert_eq!(nondecimal, Err(CheckError::NonDecimal));
+
+        let nondecimal = bsc.to_i32_decimal(b"a123");
+        assert_eq!(nondecimal, Err(CheckError::NonDecimal));
 
         let err_empty = bsc.to_i32_decimal(b"");
         assert_eq!(err_empty, Err(CheckError::Empty));
@@ -148,7 +154,53 @@ mod tests {
         let i128_overflowed_value = bsc.to_i128_decimal(i128_overflow_str);
         // it is under the maximum of u128 
         assert_eq!(i128_overflowed_value, Err(CheckError::Overflow));
+
+        let i128_leading_zero_str = b"00000000000000000000000000000000000000000000001234";
+        let val_i128_leading_zero = bsc.to_i128_decimal(i128_leading_zero_str)?;
+        assert_eq!(val_i128_leading_zero, 1234);
         
         Ok(())
     }
+
+    #[test]
+    fn test_atoi() -> Result<()> {
+        let err_overflow = atoi::<i32>(b"1234567890123");
+        assert_eq!(err_overflow, None);
+
+        let val_i64 = atoi::<i64>(b"1234567890123");
+        assert_eq!(val_i64, Some(1234567890123));
+
+        let nondecimal = atoi::<i64>(b"123a");
+        assert_eq!(nondecimal, Some(123));
+
+        let nondecimal = atoi::<i64>(b"a123");
+        assert_eq!(nondecimal, None);
+
+        let err_empty = atoi::<i64>(b"");
+        assert_eq!(err_empty, None);
+
+        let u128_max_str = b"340282366920938463463374607431768211455";
+        let val_u128_max = atoi::<u128>(u128_max_str);
+        assert_eq!(val_u128_max, Some(u128::MAX));
+
+        let u128_overflow_str = b"340282366920938463463374607431768211456";
+        let err_u128_overflow = atoi::<u128>(u128_overflow_str);
+        assert_eq!(err_u128_overflow, None);
+        
+        let i128_max_str = b"170141183460469231731687303715884105727";
+        let val_i128_max = atoi::<i128>(i128_max_str);
+        assert_eq!(val_i128_max, Some(i128::MAX));
+
+        let i128_overflow_str = b"170141183460469231731687303715884105728";
+        let i128_overflowed_value = atoi::<i128>(i128_overflow_str);
+        // it is under the maximum of u128 
+        assert_eq!(i128_overflowed_value, None);
+
+        let i128_leading_zero_str = b"00000000000000000000000000000000000000000000001234";
+        let val_i128_leading_zero = atoi::<i128>(i128_leading_zero_str);
+        assert_eq!(val_i128_leading_zero, Some(1234));
+        
+        Ok(())
+    }
+
 }

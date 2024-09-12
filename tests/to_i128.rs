@@ -81,15 +81,15 @@ mod tests {
         assert_eq!(val, Ok(i128::MAX), "Failed for i128::MAX");
 
         // Test wrapping behavior at i128::MAX + 1
-        let byte_test_p1 = (i128::MAX.wrapping_add(1)).to_string();
+        let byte_test_p1 = "170141183460469231731687303715884105728";
         let byte_test_p1 = byte_test_p1.as_bytes();
         let val_p1 = biscuit.to_i128_decimal(byte_test_p1);
-        assert_eq!(val_p1, Ok(i128::MIN), "Unexpected behavior for i128::MAX + 1");
+        assert_eq!(val_p1, Err(CheckError::Overflow), "Unexpected behavior for i128::MAX + 1");
 
-        // Test values slightly above i128::MAX + 1
-        let byte_test_p2 = (i128::MAX.wrapping_add(2)).to_string();
+        // Test values slightly above i128::MAX + 2
+        let byte_test_p2 = "170141183460469231731687303715884105729";
         let val_p2 = biscuit.to_i128_decimal(byte_test_p2.as_bytes());
-        assert_eq!(val_p2, Ok(i128::MIN.wrapping_add(1)), "Unexpected behavior for i128::MAX + 2");
+        assert_eq!(val_p2, Err(CheckError::Overflow), "Unexpected behavior for i128::MAX + 2");
 
         // Test values near i128::MIN
         let near_min = i128::MIN + 1;
