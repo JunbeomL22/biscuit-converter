@@ -349,41 +349,7 @@ impl Biscuit for u128 {
 impl Biscuit for u64 {
     fn unsinged_decimal_core(u: &[u8], neg_max_check: bool, pos_max_check: bool) -> Result<Self, crate::error::ParseIntErr> {
         let length = u.len();
-        if length <= 8 {
-            if length <= 4 {
-                match length {
-                    0 => Err(ParseIntErr::Empty),
-                    1 => checked_conversion_u8(u).map(|val| val as u64),
-                    2 => checked_conversion_u16(u).map(|val| val as u64),
-                    3 => {
-                        let upper_chunk = checked_conversion_u16(&u[..2])?;
-                        let lower_chunk = checked_conversion_u8(&u[2..])?;
-                        Ok((upper_chunk as u64) * 10 + lower_chunk as u64)
-                    }
-                    _ => checked_conversion_u32(u).map(|val| val as u64),
-                }
-            } else {
-                match length {
-                    5 => {
-                        let upper_chunk = checked_conversion_u32(&u[..4])?;
-                        let lower_chunk = checked_conversion_u8(&u[4..])?;
-                        Ok((upper_chunk) as u64 * 10 + lower_chunk as u64)
-                    },
-                    6 => {
-                        let upper_chunk = checked_conversion_u32(&u[..4])?;
-                        let lower_chunk = checked_conversion_u16(&u[4..])?;
-                        Ok(upper_chunk as u64 * 100 + lower_chunk as u64)
-                    },
-                    7 => {
-                        let upper_chunk = checked_conversion_u32(&u[..4])?;
-                        let mid_chunk = checked_conversion_u16(&u[4..6])?;
-                        let lower_chunk = checked_conversion_u8(&u[6..])?;
-                        Ok(upper_chunk as u64 * 1_000 + mid_chunk as u64 * 10 + lower_chunk as u64)
-                    },
-                    _ => checked_conversion_u64(u),
-                }
-            }
-        } else {
+        if length > 8 {
             match length {
                 9 => {
                     let upper_chunk = checked_conversion_u64(&u[..8])?;
@@ -497,7 +463,41 @@ impl Biscuit for u64 {
                     Self::unsinged_decimal_core(u, neg_max_check, pos_max_check)
                 },
             }
-        }
+        } else {
+            if length > 4 {
+                match length {
+                    5 => {
+                        let upper_chunk = checked_conversion_u32(&u[..4])?;
+                        let lower_chunk = checked_conversion_u8(&u[4..])?;
+                        Ok((upper_chunk) as u64 * 10 + lower_chunk as u64)
+                    },
+                    6 => {
+                        let upper_chunk = checked_conversion_u32(&u[..4])?;
+                        let lower_chunk = checked_conversion_u16(&u[4..])?;
+                        Ok(upper_chunk as u64 * 100 + lower_chunk as u64)
+                    },
+                    7 => {
+                        let upper_chunk = checked_conversion_u32(&u[..4])?;
+                        let mid_chunk = checked_conversion_u16(&u[4..6])?;
+                        let lower_chunk = checked_conversion_u8(&u[6..])?;
+                        Ok(upper_chunk as u64 * 1_000 + mid_chunk as u64 * 10 + lower_chunk as u64)
+                    },
+                    _ => checked_conversion_u64(u),
+                }
+            } else {
+                match length {
+                    0 => Err(ParseIntErr::Empty),
+                    1 => checked_conversion_u8(u).map(|val| val as u64),
+                    2 => checked_conversion_u16(u).map(|val| val as u64),
+                    3 => {
+                        let upper_chunk = checked_conversion_u16(&u[..2])?;
+                        let lower_chunk = checked_conversion_u8(&u[2..])?;
+                        Ok((upper_chunk as u64) * 10 + lower_chunk as u64)
+                    }
+                    _ => checked_conversion_u32(u).map(|val| val as u64),
+                }
+            } 
+        } 
     }
 }
 

@@ -8,6 +8,11 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/JunbeomL22/biscuit-converter"
 keywords = ["parser", "numeric-parser", "fast", "safe", "bit-operation"]
 
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
 [dev-dependencies]
 criterion = "0.5"
 atoi = "2.0"

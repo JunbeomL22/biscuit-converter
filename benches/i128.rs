@@ -1,6 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion, black_box};
 use biscuit_converter::Biscuit;
-use atoi::atoi;
 use atoi::FromRadix10Signed;
 
 fn bench_i128(c: &mut Criterion) {
