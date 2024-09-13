@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-biscuit-converter = "0.2"
+biscuit-converter = "0.3"
 ```
 
 Then, use it in your Rust code:
