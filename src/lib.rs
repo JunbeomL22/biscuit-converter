@@ -1,6 +1,6 @@
 //! # biscuit-converter
 //!
-//! biscuit-converter is a integer parser for decimal formatted ASCII strings.
+//! biscuit-converter is a decimal integer parser using bitwise operations.
 //! ## Performance
 //!
 //! Test machine: Ryzen 7 7700 3.8Ghz, rust 1.79
@@ -12,7 +12,7 @@
 //! Add this to your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! biscuit-converter = "0.2"
+//! biscuit-converter = "0.3"
 //! ```
 //! Then, use it in your Rust code:
 //! ```rust
