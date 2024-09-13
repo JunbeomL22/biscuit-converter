@@ -51,8 +51,8 @@ assert_eq!(reading, Ok(123));
 ## Performance
 * Comparisons: `biscuit` & `std` & `atoi`
 * Key Features:
-  * Overall, `biscuit-converter` demonstrates superior performance compared to other parsers for unsigned types.
-  * For signed types, significant performance improvements are only observed with longer digit lengths.
+  * Overall, `biscuit-converter` shows better performance compared to other parsers for unsigned types.
+  * For signed types, performance improvements are only observed with longer digit lengths.
 
 * Test machine: Ryzen 7 7700 3.8Ghz, rust 1.79
 * Configurations:
