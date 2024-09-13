@@ -2,25 +2,6 @@
 
 biscuit-converter is a decimal integer parser using bitwise operations.
 
-## Performance
-* Comparisons: ```biscuit``` & ```std``` & ```atoi```
-* Test machine: Ryzen 7 7700 3.8Ghz, rust 1.79
-* Configurations:
-
-```toml
-[profile.release]
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-```
-```cmd
-set RUSTFLAGS=-C target-cpu=native && cargo bench
-```
-
-
-### `i128` Performance Comparison (in nanoseconds)
-
-[Performance data to be added here]
 
 ## Usage
 
@@ -66,6 +47,33 @@ assert_eq!(val, Err(ParseIntErr::NegOverflow));
 let reading = i32::parse_decimal(b"0000000000000000000000000000000000000123");
 assert_eq!(reading, Ok(123));
 ```
+
+## Performance
+* Comparisons: `biscuit` & `std` & `atoi`
+* Test machine: Ryzen 7 7700 3.8Ghz, rust 1.79
+* Configurations:
+
+```toml
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+```
+```cmd
+set RUSTFLAGS=-C target-cpu=native && cargo bench
+```
+
+
+### `i128` comparisons
+![i128 comparison](./images/i128.png)
+
+### `i64` comparison
+![i64 comparison](./images/i64.png)
+
+### `i32` comparison
+![i32 comparison](./images/i32.png)
+
+
 
 ## License
 

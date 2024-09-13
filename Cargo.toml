@@ -59,9 +59,3 @@ harness = false
 name = "u128"
 harness = false
 
-[[bench]]
-name = "leading_zero"
-harness = false
-
-
-
