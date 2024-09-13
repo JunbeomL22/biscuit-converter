@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.3.0]
+ - changed parser name to specify it it is for decimal
+ - changed return type to show error types
 
 ## [0.2.0] - 2024-09-10
  - drop float parser

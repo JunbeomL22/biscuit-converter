@@ -1,9 +1,9 @@
 use criterion::{criterion_group, criterion_main, Criterion, black_box};
-use biscuit_converter::BiscuitConverter;
+use biscuit_converter::Biscuit;
 use atoi::atoi;
 
 fn bench_u128(c: &mut Criterion) {
-    let biscuit_converter = BiscuitConverter::default();
+
     
     let test_set: Vec<&str> = vec![
         "1",
@@ -51,7 +51,7 @@ fn bench_u128(c: &mut Criterion) {
         let mut group = c.benchmark_group(format!("u128 {}", test));
         
         let input_bytes = test.as_bytes();
-        group.bench_function("biscuit", |b| b.iter(|| biscuit_converter.to_u128_decimal(black_box(input_bytes)).unwrap()));
+        group.bench_function("biscuit", |b| b.iter(|| u128::parse_decimal(black_box(input_bytes)).unwrap()));
         group.bench_function("std", |b| b.iter(|| black_box(test).parse::<u128>().unwrap()));
         group.bench_function("atoi", |b| b.iter(|| atoi::<u128>(black_box(input_bytes)).unwrap()));
 

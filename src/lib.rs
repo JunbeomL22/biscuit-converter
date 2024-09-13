@@ -7,69 +7,6 @@
 //!
 //! ### `i128` Performance Comparison (in nanoseconds)
 //! 
-//! | Input                             | biscuit | std    | atoi   |
-//! |-----------------------------------|---------|--------|--------|
-//! | -1                                | 3.2 ns  | 7.1 ns | 3.4 ns |
-//! | -12                               | 3.1 ns  | 8.2 ns | 3.7 ns |
-//! | -123                              | 3.2 ns  | 7.5 ns | 4.9 ns |
-//! | -1234                             | 3.2 ns  | 7.9 ns | 4.9 ns |
-//! | -12345                            | 3.2 ns  | 9.4 ns | 5.7 ns |
-//! | -123456                           | 3.4 ns  | 8.9 ns | 6.3 ns |
-//! | -1234567                          | 3.6 ns  | 9.5 ns | 7.2 ns |
-//! | -12345678                         | 3.2 ns  | 10.6 ns| 8.1 ns |
-//! | -123456789                        | 3.4 ns  | 10.2 ns| 9.3 ns |
-//! | -1234567890                       | 3.6 ns  | 9.8 ns | 9.6 ns |
-//! | -12345678901                      | 3.9 ns  | 11.4 ns| 10.9 ns|
-//! | -123456789012                     | 3.8 ns  | 11.6 ns| 12.0 ns|
-//! | -1234567890123                    | 4.1 ns  | 13.4 ns| 12.1 ns|
-//! | -12345678901234                   | 4.1 ns  | 13.5 ns| 13.5 ns|
-//! | -123456789012345                  | 4.6 ns  | 15.6 ns| 14.1 ns|
-//! | -1234567890123456                 | 4.1 ns  | 16.7 ns| 15.0 ns|
-//! | -12345678901234567                | 4.4 ns  | 17.2 ns| 16.0 ns|
-//! | -123456789012345678               | 4.5 ns  | 17.6 ns| 17.3 ns|
-//! | -1234567890123456789              | 4.8 ns  | 19.2 ns| 18.4 ns|
-//! | -12345678901234567890             | 4.7 ns  | 20.0 ns| 18.9 ns|
-//! | -123456789012345678901            | 5.0 ns  | 20.2 ns| 20.0 ns|
-//! | -1234567890123456789012           | 5.1 ns  | 21.0 ns| 20.6 ns|
-//! | -12345678901234567890123          | 5.3 ns  | 22.6 ns| 21.3 ns|
-//! | -123456789012345678901234         | 4.9 ns  | 22.9 ns| 22.4 ns|
-//! | -1234567890123456789012345        | 5.1 ns  | 23.6 ns| 23.3 ns|
-//! | -12345678901234567890123456       | 5.4 ns  | 25.4 ns| 24.1 ns|
-//! | -123456789012345678901234567      | 5.7 ns  | 25.9 ns| 25.1 ns|
-//! | -1234567890123456789012345678     | 5.4 ns  | 26.5 ns| 25.9 ns|
-//! | -12345678901234567890123456789    | 5.8 ns  | 28.3 ns| 27.0 ns|
-//! | -123456789012345678901234567890   | 6.1 ns  | 28.7 ns| 27.9 ns|
-//! | -1234567890123456789012345678901  | 6.5 ns  | 28.8 ns| 28.9 ns|
-//! | -12345678901234567890123456789012 | 5.9 ns  | 47.5 ns| 30.6 ns|
-//! | -123456789012345678901234567890123| 6.7 ns | 53.9 ns| 30.9 ns|
-//! | -1234567890123456789012345678901234| 7.1 ns| 55.9 ns| 31.6 ns|
-//! | -12345678901234567890123456789012345| 7.0 ns| 53.2 ns| 31.5 ns|
-//! | -123456789012345678901234567890123456| 6.9 ns| 54.1 ns| 31.7 ns|
-//! | -1234567890123456789012345678901234567| 7.8 ns| 58.4 ns| 32.5 ns|
-//! | -12345678901234567890123456789012345678| 8.2 ns| 59.7 ns| 34.3 ns|
-//!
-//! ### `i64` Performance Comparison (in nanoseconds)
-//!
-//! | Input                    | biscuit | std    | atoi   |
-//! |--------------------------|---------|--------|--------|
-//! | -1                       | 1.7 ns  | 3.4 ns | 1.7 ns |
-//! | -12                      | 1.9 ns  | 3.5 ns | 2.1 ns |
-//! | -123                     | 2.0 ns  | 4.0 ns | 2.4 ns |
-//! | -1234                    | 2.0 ns  | 4.1 ns | 2.8 ns |
-//! | -12345                   | 2.2 ns  | 4.3 ns | 3.2 ns |
-//! | -123456                  | 2.2 ns  | 4.7 ns | 3.8 ns |
-//! | -1234567                 | 2.4 ns  | 4.9 ns | 4.1 ns |
-//! | -12345678                | 2.2 ns  | 5.1 ns | 4.5 ns |
-//! | -123456789               | 2.4 ns  | 5.5 ns | 5.0 ns |
-//! | -1234567890              | 2.6 ns  | 5.6 ns | 5.4 ns |
-//! | -123456789012            | 2.8 ns  | 6.5 ns | 6.4 ns |
-//! | -1234567890123           | 3.0 ns  | 6.9 ns | 6.9 ns |
-//! | -12345678901234          | 3.2 ns  | 7.4 ns | 7.4 ns |
-//! | -123456789012345         | 3.4 ns  | 7.9 ns | 7.8 ns |
-//! | -1234567890123456        | 3.2 ns  | 9.7 ns | 8.2 ns |
-//! | -12345678901234567       | 3.2 ns  | 10.4 ns| 9.0 ns |
-//! | -123456789012345678      | 3.5 ns  | 11.0 ns| 9.1 ns |
-//! | -1234567890123456789     | 3.9 ns  | 11.5 ns| 10.0 ns|
 //!
 //! ## Usage
 //! Add this to your `Cargo.toml`:
@@ -79,15 +16,37 @@
 //! ```
 //! Then, use it in your Rust code:
 //! ```rust
-//! use biscuit_converter::BiscuitConverter;
+//! use biscuit_converter::{Biscuit, error::ParseIntErr};
 //! 
-//! let biscuit_converter = BiscuitConverter::default();
-//! // Parsing examples
-//! let u64_result = biscuit_converter.to_u64_decimal(b"123");
-//! assert_eq!(u64_result, Ok(123));
-//! let i64_result = biscuit_converter.to_i64_decimal(b"-123");
-//! assert_eq!(i64_result, Ok(-123));
+//! let val = i32::parse_decimal(b"1234");
+//! assert_eq!(val, Ok(1234));
 //! 
+//! let val = i32::parse_decimal(b"1234a");
+//! assert_eq!(val, Err(ParseIntErr::NonDecimal));
+//! 
+//! let val = i32::parse_decimal(b"a1234");
+//! assert_eq!(val, Err(ParseIntErr::NonDecimal));
+//! 
+//! let val = i32::parse_decimal(b"");
+//! assert_eq!(val, Err(ParseIntErr::Empty));
+//! 
+//! let val = i32::parse_decimal(b" ");
+//! assert_eq!(val, Err(ParseIntErr::NonDecimal));
+//! 
+//! let val = i32::parse_decimal(b"2147483647"); // i32::MAX
+//! assert_eq!(val, Ok(2147483647));
+//! 
+//! let val = i32::parse_decimal(b"2147483648"); // i32::MAX + 1
+//! assert_eq!(val, Err(ParseIntErr::Overflow));
+//! 
+//! let val = i32::parse_decimal(b"-2147483648"); // i32::MIN
+//! assert_eq!(val, Ok(-2147483648));
+//! 
+//! let val = i32::parse_decimal(b"-2147483649"); // i32::MIN - 1
+//! assert_eq!(val, Err(ParseIntErr::NegOverflow));
+//! 
+//! let reading = i32::parse_decimal(b"0000000000000000000000000000000000000123");
+//! assert_eq!(reading, Ok(123));
 //! ```
 //! 
 //! # License
@@ -107,56 +66,62 @@ pub mod little_endian_decimal;
 pub mod integer_decimal;
 pub mod error;
 pub mod utils;
-pub mod little_endian_hexa;
 /// Parser for decimal notation
 /// It can not parse scientific notation
-#[derive(Debug, Clone, Copy, Default)]
-pub struct BiscuitConverter {}
+pub trait Biscuit: Sized {
+    #[inline]
+    fn parse_decimal(u: &[u8]) -> Result<Self, error::ParseIntErr> {
+        Self::unsinged_decimal_core(u, false, false)
+    }
+
+    fn unsinged_decimal_core(_u: &[u8], _neg_max_check: bool, _pos_max_check: bool) -> Result<Self, error::ParseIntErr> {
+        unimplemented!("This function should be implemented in the child struct")
+    }
+}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::error::CheckError;
+    use crate::Biscuit;
+    use crate::error::ParseIntErr;
     use anyhow::Result;
     use atoi::atoi;
 
     #[test]
     fn test_base() -> Result<()> {
-        let bsc = BiscuitConverter::default();
-        let err_overflow = bsc.to_i32_decimal(b"1234567890123");
-        assert_eq!(err_overflow, Err(CheckError::Overflow));
+        let err_overflow = i32::parse_decimal(b"1234567890123");
+        assert_eq!(err_overflow, Err(ParseIntErr::Overflow));
 
-        let val_i64 = bsc.to_i64_decimal(b"1234567890123");
+        let val_i64 = i64::parse_decimal(b"1234567890123");
         assert_eq!(val_i64, Ok(1234567890123));
 
-        let nondecimal = bsc.to_i32_decimal(b"123a");
-        assert_eq!(nondecimal, Err(CheckError::NonDecimal));
+        let nondecimal = i32::parse_decimal(b"123a");
+        assert_eq!(nondecimal, Err(ParseIntErr::NonDecimal));
 
-        let nondecimal = bsc.to_i32_decimal(b"a123");
-        assert_eq!(nondecimal, Err(CheckError::NonDecimal));
+        let nondecimal = i32::parse_decimal(b"a123");
+        assert_eq!(nondecimal, Err(ParseIntErr::NonDecimal));
 
-        let err_empty = bsc.to_i32_decimal(b"");
-        assert_eq!(err_empty, Err(CheckError::Empty));
+        let err_empty = i32::parse_decimal(b"");
+        assert_eq!(err_empty, Err(ParseIntErr::Empty));
 
         let u128_max_str = b"340282366920938463463374607431768211455";
-        let val_u128_max = bsc.to_u128_decimal(u128_max_str)?;
+        let val_u128_max = u128::parse_decimal(u128_max_str)?;
         assert_eq!(val_u128_max, u128::MAX);
 
         let u128_overflow_str = b"340282366920938463463374607431768211456";
-        let err_u128_overflow = bsc.to_u128_decimal(u128_overflow_str);
-        assert_eq!(err_u128_overflow, Err(CheckError::Overflow));
+        let err_u128_overflow = u128::parse_decimal(u128_overflow_str);
+        assert_eq!(err_u128_overflow, Err(ParseIntErr::Overflow));
         
         let i128_max_str = b"170141183460469231731687303715884105727";
-        let val_i128_max = bsc.to_i128_decimal(i128_max_str)?;
+        let val_i128_max = i128::parse_decimal(i128_max_str)?;
         assert_eq!(val_i128_max, i128::MAX);
 
         let i128_overflow_str = b"170141183460469231731687303715884105728";
-        let i128_overflowed_value = bsc.to_i128_decimal(i128_overflow_str);
+        let i128_overflowed_value = i128::parse_decimal(i128_overflow_str);
         // it is under the maximum of u128 
-        assert_eq!(i128_overflowed_value, Err(CheckError::Overflow));
+        assert_eq!(i128_overflowed_value, Err(ParseIntErr::Overflow));
 
         let i128_leading_zero_str = b"00000000000000000000000000000000000000000000001234";
-        let val_i128_leading_zero = bsc.to_i128_decimal(i128_leading_zero_str)?;
+        let val_i128_leading_zero = i128::parse_decimal(i128_leading_zero_str)?;
         assert_eq!(val_i128_leading_zero, 1234);
         
         Ok(())
@@ -196,11 +161,63 @@ mod tests {
         // it is under the maximum of u128 
         assert_eq!(i128_overflowed_value, None);
 
-        let i128_leading_zero_str = b"00000000000000000000000000000000000000000000001234";
+        let i128_leading_zero_str = b"000000000000000000000000000000000000000000000000001234";
         let val_i128_leading_zero = atoi::<i128>(i128_leading_zero_str);
         assert_eq!(val_i128_leading_zero, Some(1234));
         
         Ok(())
     }
 
+    #[test]
+    fn test_std() -> Result<()> {
+        let err_overflow = "1234567890123".parse::<i32>();
+        match err_overflow {
+            Ok(_) => panic!("Should have failed to parse"),
+            Err(e) => assert_eq!(*e.kind(), std::num::IntErrorKind::PosOverflow),
+        }
+
+        let val_i64 = "1234567890123".parse::<i64>();
+        assert_eq!(val_i64, Ok(1234567890123));
+
+        let nondecimal = "123a".parse::<i64>();
+        match nondecimal {
+            Ok(_) => panic!("Should have failed to parse"),
+            Err(e) => assert_eq!(*e.kind(), std::num::IntErrorKind::InvalidDigit),
+        }
+
+        let nondecimal = "a123".parse::<i64>();
+        match nondecimal {
+            Ok(_) => panic!("Should have failed to parse"),
+            Err(e) => assert_eq!(*e.kind(), std::num::IntErrorKind::InvalidDigit),
+        }
+
+        let err_empty = "".parse::<i64>();
+        match err_empty {
+            Ok(_) => panic!("Should have failed to parse"),
+            Err(e) => assert_eq!(*e.kind(), std::num::IntErrorKind::Empty),
+        }
+
+        let u128_max_str = "340282366920938463463374607431768211455".parse::<u128>();
+        assert_eq!(u128_max_str, Ok(u128::MAX));
+
+        let u128_overflow_str = "340282366920938463463374607431768211456".parse::<u128>();
+        match u128_overflow_str {
+            Ok(_) => panic!("Should have failed to parse"),
+            Err(e) => assert_eq!(*e.kind(), std::num::IntErrorKind::PosOverflow),
+        }
+
+        let i128_max_str = "170141183460469231731687303715884105727".parse::<i128>();
+        assert_eq!(i128_max_str, Ok(i128::MAX));
+
+        let i128_overflow_str = "170141183460469231731687303715884105728".parse::<i128>();
+        match i128_overflow_str {
+            Ok(_) => panic!("Should have failed to parse"),
+            Err(e) => assert_eq!(*e.kind(), std::num::IntErrorKind::PosOverflow),
+        }
+
+        let i128_leading_zero_str = "000000000000000000000000000000000000000000000000001234".parse::<i128>();
+        assert_eq!(i128_leading_zero_str, Ok(1234));
+
+        Ok(())
+    }
 }

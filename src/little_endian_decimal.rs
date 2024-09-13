@@ -1,4 +1,4 @@
-use crate::error::CheckError;
+use crate::error::ParseIntErr;
 use crate::utils::{
     le_bytes_to_u16,
     le_bytes_to_u32,
@@ -7,52 +7,52 @@ use crate::utils::{
 };
 
 #[inline]
-pub(crate) fn checked_conversion_u8(input: &[u8]) -> Result<u8, CheckError> {
+pub(crate) fn checked_conversion_u8(input: &[u8]) -> Result<u8, ParseIntErr> {
     if input[0] >= 0x30 && input[0] <= 0x39 {
         Ok(input[0] - 0x30)
     } else {
-        Err(CheckError::NonDecimal)
+        Err(ParseIntErr::NonDecimal)
     }
 }
 
 #[inline]
-pub(crate) fn checked_conversion_u16(input: &[u8]) -> Result<u16, CheckError> {
+pub(crate) fn checked_conversion_u16(input: &[u8]) -> Result<u16, ParseIntErr> {
     let chunk = le_bytes_to_u16(input);
     if check_decimal_bit_u16(chunk) {
         Ok(two_to_u16_decimal(chunk))
     } else {
-        Err(CheckError::NonDecimal)
+        Err(ParseIntErr::NonDecimal)
     }
 }
 
 #[inline]
-pub(crate) fn checked_conversion_u32(input: &[u8]) -> Result<u32, CheckError> {
+pub(crate) fn checked_conversion_u32(input: &[u8]) -> Result<u32, ParseIntErr> {
     let chunk = le_bytes_to_u32(input);
     if check_decimal_bit_u32(chunk) {
         Ok(four_to_u32(chunk))
     } else {
-        Err(CheckError::NonDecimal)
+        Err(ParseIntErr::NonDecimal)
     }
 }
 
 #[inline]
-pub(crate) fn checked_conversion_u64(input: &[u8]) -> Result<u64, CheckError> {
+pub(crate) fn checked_conversion_u64(input: &[u8]) -> Result<u64, ParseIntErr> {
     let chunk = le_bytes_to_u64(input);
     if check_decimal_bit_u64(chunk) {
         Ok(eight_to_u64(chunk))
     } else {
-        Err(CheckError::NonDecimal)
+        Err(ParseIntErr::NonDecimal)
     }
     
 }
 
 #[inline]
-pub(crate) fn checked_conversion_u128(input: &[u8]) -> Result<u128, CheckError> {
+pub(crate) fn checked_conversion_u128(input: &[u8]) -> Result<u128, ParseIntErr> {
     let chunk = le_bytes_to_u128(input);
     if check_decimal_bit_u128(chunk) {
         Ok(sixteen_to_u128(chunk))
     } else {
-        Err(CheckError::NonDecimal)
+        Err(ParseIntErr::NonDecimal)
     }
 }
 

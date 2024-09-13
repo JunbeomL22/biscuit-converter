@@ -1,38 +1,41 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CheckError {
+pub enum ParseIntErr {
     NonDecimal,
     Empty,
     Overflow,
+    NegOverflow,
     Unknown,
 }
 
-impl std::fmt::Display for CheckError {
+impl std::fmt::Display for ParseIntErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CheckError::NonDecimal => write!(f, "NonDecimal"),
-            CheckError::Empty => write!(f, "Empty"),
-            CheckError::Overflow => write!(f, "Overflow"),
-            CheckError::Unknown => write!(f, "UnknownError"),
+            ParseIntErr::NonDecimal => write!(f, "NonDecimal"),
+            ParseIntErr::Empty => write!(f, "Empty"),
+            ParseIntErr::Overflow => write!(f, "Overflow"),
+            ParseIntErr::NegOverflow => write!(f, "NegOverflow"),
+            ParseIntErr::Unknown => write!(f, "UnknownError"),
         }
     }
 }
 
-impl std::error::Error for CheckError {}
+impl std::error::Error for ParseIntErr {}
 
 // String으로 변환
-impl From<CheckError> for String {
-    fn from(error: CheckError) -> Self {
+impl From<ParseIntErr> for String {
+    fn from(error: ParseIntErr) -> Self {
         error.to_string()
     }
 }
 
-impl CheckError {
+impl ParseIntErr {
     pub fn as_str(&self) -> &str {
         match self {
-            CheckError::NonDecimal => "NonDecimal",
-            CheckError::Empty => "Empty",
-            CheckError::Overflow => "Overflow",
-            CheckError::Unknown => "UnknownError",
+            ParseIntErr::NonDecimal => "NonDecimal",
+            ParseIntErr::Empty => "Empty",
+            ParseIntErr::Overflow => "Overflow",
+            ParseIntErr::Unknown => "UnknownError",
+            ParseIntErr::NegOverflow => "NegOverflow",
         }
     }
 }
