@@ -3,7 +3,7 @@
 biscuit-converter is a decimal integer parser using bitwise operations.
 
 ## Performance
-* comparisons: biscuit & std & atoi
+* comparisons: ```biscuit``` & ```std``` & ```atoi```
 * Test machine: Ryzen 7 7700 3.8Ghz, rust 1.79
 * configurations:
 
