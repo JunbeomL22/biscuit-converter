@@ -1,26 +1,24 @@
 //! # biscuit-converter
-//!
-//! biscuit-converter is a decimal integer parser using bitwise operations.
-//! ## Performance
-//!
-//! Test machine: Ryzen 7 7700 3.8Ghz, rust 1.79
-//!
-//! ### `i128` Performance Comparison (in nanoseconds)
 //! 
-//!
+//! `biscuit-converter` is a decimal integer parser using bitwise operations.
+//! 
 //! ## Usage
+//! 
 //! Add this to your `Cargo.toml`:
+//! 
 //! ```toml
 //! [dependencies]
 //! biscuit-converter = "0.3"
 //! ```
+//! 
 //! Then, use it in your Rust code:
+//! 
 //! ```rust
 //! use biscuit_converter::{Biscuit, error::ParseIntErr};
 //! 
 //! let val = i32::parse_decimal(b"1234");
 //! assert_eq!(val, Ok(1234));
-//! 
+//!
 //! let val = i32::parse_decimal(b"1234a");
 //! assert_eq!(val, Err(ParseIntErr::NonDecimal));
 //! 
@@ -49,18 +47,18 @@
 //! assert_eq!(reading, Ok(123));
 //! ```
 //! 
-//! # License
+//! ## License
+//! 
 //! This project is licensed under either of
-//!
 //! - Apache License, Version 2.0, <http://www.apache.org/licenses/LICENSE-2.0>
 //! - MIT license <http://opensource.org/licenses/MIT>
-//!
 //! at your option.
-//!
-//! # Contributions
-//!
-//! We welcome all kinds of contributions! Whether it's bug reports, feature requests, or code contributions, 
-//! your input is valuable and appreciated. Feel free to open issues or submit pull requests on our GitHub repository.
+//! 
+//! ## Contributions
+//! 
+//! Contributions are welcome! Feel free to open issues or submit pull requests on our GitHub repository.
+
+// Rest of your library code goes here...
 pub mod unsigned_decimal;
 pub mod little_endian_decimal;
 pub mod integer_decimal;
