@@ -278,7 +278,6 @@ mod tests {
 
     #[test]
     fn test_space_rejection() {
-        // 공백 문자는 거부되어야 함
         let spaces = b"        ";
         let data = le_bytes_to_u64(spaces);
         assert!(!check_decimal_bit_u64_optimal(data));
@@ -367,6 +366,7 @@ mod tests {
         let x = le_bytes_to_u128(x);
         assert_eq!(sixteen_to_u128(x), 1234567890123456);
     }
+
     #[test]
     fn test_check_decimal_u16_optimal() {
     for i in 0..100 {
