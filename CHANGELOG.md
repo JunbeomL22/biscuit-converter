@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.0]
+ - fix the bug that space bytes are parsed as zero
+ - slightly optimized by reducing unnecessary operations
+
 ## [0.3.0]
  - changed parser name to specify it it is for decimal
  - changed return type to show error types

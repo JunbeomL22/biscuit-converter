@@ -4,9 +4,9 @@ use atoi::atoi;
 
 fn bench_i64(c: &mut Criterion) {
     let test_set = vec![
-        //"-1",
-        //"-12",
-        //"-123",
+        "-1",
+        "-12",
+        "-123",
         "-1234", 
         "-12345",
         "-123456",

@@ -18,7 +18,7 @@ pub(crate) fn checked_conversion_u8(input: &[u8]) -> Result<u8, ParseIntErr> {
 #[inline]
 pub(crate) fn checked_conversion_u16(input: &[u8]) -> Result<u16, ParseIntErr> {
     let chunk = le_bytes_to_u16(input);
-    if check_decimal_bit_u16(chunk) {
+    if check_decimal_bit_u16_optimal(chunk) {
         Ok(two_to_u16_decimal(chunk))
     } else {
         Err(ParseIntErr::NonDecimal)
@@ -28,7 +28,7 @@ pub(crate) fn checked_conversion_u16(input: &[u8]) -> Result<u16, ParseIntErr> {
 #[inline]
 pub(crate) fn checked_conversion_u32(input: &[u8]) -> Result<u32, ParseIntErr> {
     let chunk = le_bytes_to_u32(input);
-    if check_decimal_bit_u32(chunk) {
+    if check_decimal_bit_u32_optimal(chunk) {
         Ok(four_to_u32(chunk))
     } else {
         Err(ParseIntErr::NonDecimal)
@@ -38,7 +38,7 @@ pub(crate) fn checked_conversion_u32(input: &[u8]) -> Result<u32, ParseIntErr> {
 #[inline]
 pub(crate) fn checked_conversion_u64(input: &[u8]) -> Result<u64, ParseIntErr> {
     let chunk = le_bytes_to_u64(input);
-    if check_decimal_bit_u64(chunk) {
+    if check_decimal_bit_u64_optimal(chunk) {
         Ok(eight_to_u64(chunk))
     } else {
         Err(ParseIntErr::NonDecimal)
@@ -49,7 +49,7 @@ pub(crate) fn checked_conversion_u64(input: &[u8]) -> Result<u64, ParseIntErr> {
 #[inline]
 pub(crate) fn checked_conversion_u128(input: &[u8]) -> Result<u128, ParseIntErr> {
     let chunk = le_bytes_to_u128(input);
-    if check_decimal_bit_u128(chunk) {
+    if check_decimal_bit_u128_optimal(chunk) {
         Ok(sixteen_to_u128(chunk))
     } else {
         Err(ParseIntErr::NonDecimal)
@@ -144,6 +144,7 @@ const ZERO_COMPLEMENT_U32: u32 = 0x00CF00CF;
 const NINE_COMPLEMENT_U32: u32 = 0x00C600C6;
 const CHECKER_MASK_U32: u32 = 0xFF00FF00;
 
+
 #[inline]
 #[must_use]
 pub(crate) fn check_decimal_bit_u32(chunk: u32) -> bool {
@@ -186,6 +187,38 @@ pub(crate) fn check_decimal_bit_u128(chunk: u128) -> bool {
     let upper_lower_check = (((0xFF00FF00FF00FF00FF00FF00FF00FF00 - ((chunk & 0xFF00FF00FF00FF00FF00FF00FF00FF00) >> 8 )) + ZERO_COMPLEMENT_U128) & CHECKER_MASK_U128) != 0;
 
     lower_upper_check && lower_lower_check && upper_upper_check && upper_lower_check
+}
+
+#[inline]
+#[must_use]
+pub(crate) fn check_decimal_bit_u16_optimal(chunk: u16) -> bool {
+    let not_above = chunk.wrapping_sub(0x3A3A);
+    let not_below = 0x2F2F_u16.wrapping_sub(chunk);
+    (not_above & not_below & 0x8080) == 0x8080
+}
+
+#[inline]
+#[must_use]
+pub(crate) fn check_decimal_bit_u32_optimal(chunk: u32) -> bool {
+    let not_above = chunk.wrapping_sub(0x3A3A3A3A);
+    let not_below = 0x2F2F2F2F_u32.wrapping_sub(chunk);
+    (not_above & not_below & 0x80808080) == 0x80808080
+}
+
+#[inline]
+#[must_use]
+pub(crate) fn check_decimal_bit_u64_optimal(chunk: u64) -> bool {
+    let not_above = chunk.wrapping_sub(0x3A3A3A3A3A3A3A3A);
+    let not_below = 0x2F2F2F2F2F2F2F2F_u64.wrapping_sub(chunk);
+    (not_above & not_below & 0x8080808080808080) == 0x8080808080808080
+}
+
+#[inline]
+#[must_use]
+pub(crate) fn check_decimal_bit_u128_optimal(chunk: u128) -> bool {
+    let not_above = chunk.wrapping_sub(0x3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A);
+    let not_below = 0x2F2F2F2F2F2F2F2F2F2F2F2F2F2F2F2F_u128.wrapping_sub(chunk);
+    (not_above & not_below & 0x80808080808080808080808080808080) == 0x80808080808080808080808080808080
 }
 
 #[cfg(test)]
@@ -241,6 +274,22 @@ mod tests {
             let chunk = le_bytes_to_u32(*u);
             assert_eq!(check_decimal_bit_u32(chunk), check_decimal(*u));
         }
+    }
+
+    #[test]
+    fn test_space_rejection() {
+        // 공백 문자는 거부되어야 함
+        let spaces = b"        ";
+        let data = le_bytes_to_u64(spaces);
+        assert!(!check_decimal_bit_u64_optimal(data));
+
+        let bytes = b"1234123x";
+        let data = le_bytes_to_u64(bytes);
+        assert!(!check_decimal_bit_u64_optimal(data));
+
+        let bytes = b"12341234";
+        let data = le_bytes_to_u64(bytes);
+        assert!(check_decimal_bit_u64_optimal(data));
     }
 
     #[test]
@@ -317,6 +366,96 @@ mod tests {
         let x: &[u8] = &u[..];
         let x = le_bytes_to_u128(x);
         assert_eq!(sixteen_to_u128(x), 1234567890123456);
+    }
+    #[test]
+    fn test_check_decimal_u16_optimal() {
+    for i in 0..100 {
+        let u = format!("{:02}", i);
+        let u = u.as_bytes();
+        let chunk = le_bytes_to_u16(u);
+        assert_eq!(check_decimal_bit_u16_optimal(chunk), check_decimal(u));
+    }
+
+    let u_vec = [b"1x", b"x1", b"ab", b"zy", b"!@", b"  "];
+    for u in u_vec.iter() {
+        let chunk = le_bytes_to_u16(*u);
+        assert_eq!(check_decimal_bit_u16_optimal(chunk), check_decimal(*u));
+    }
+    }
+
+    #[test]
+    fn test_check_decimal_u32_optimal() {
+    for i in 0..10000 {
+        let u = format!("{:04}", i);
+        let u = u.as_bytes();
+        let chunk = le_bytes_to_u32(u);
+        assert_eq!(check_decimal_bit_u32_optimal(chunk), check_decimal(u));
+    }
+
+    let u_vec = [b"1x1x", b"x11a", b"ab11", b"zyab", b"!@#$", b"    "];
+    for u in u_vec.iter() {
+        let chunk = le_bytes_to_u32(*u);
+        assert_eq!(check_decimal_bit_u32_optimal(chunk), check_decimal(*u));
+    }
+    }
+
+    #[test]
+    fn test_check_decimal_u64_optimal() {
+    for i in 0..10000 {
+        let u = format!("{:08}", i);
+        let u = u.as_bytes();
+        let chunk = le_bytes_to_u64(u);
+        assert_eq!(check_decimal_bit_u64_optimal(chunk), check_decimal(u));
+    }
+
+    let u_vec = [b"1x1x1x1x", b"x11a11ax", b"ab11ab11", b"yabzyabz", b"!@#$%^&*", b"        "];
+    for u in u_vec.iter() {
+        let chunk = le_bytes_to_u64(*u);
+        assert_eq!(check_decimal_bit_u64_optimal(chunk), check_decimal(*u));
+    }
+
+    let test_vec = vec![
+        b"12345678",
+        b"8765b321", 
+        b"zyxwvuts",
+        b"00005678",
+        b"99999999",
+        b"00000000",
+    ];
+
+    for u in test_vec.iter() {
+        let chunk = le_bytes_to_u64(*u);
+        assert_eq!(check_decimal_bit_u64_optimal(chunk), check_decimal(*u));
+    }
+    }
+
+    #[test]
+    fn test_check_decimal_u128_optimal() {
+    for i in 0..10000 {
+        let u = format!("{:016}", i);
+        let u = u.as_bytes();
+        let chunk = le_bytes_to_u128(u);
+        assert_eq!(check_decimal_bit_u128_optimal(chunk), check_decimal(u));
+    }
+
+    let u_vec = [b"1x1x1x1x1x1x1x1x", b"11111a11a1x1x1x1", b"ab11ab11a1x1x1x1", b"zyabzyabz1x1x1x1", b"!@#$%^&*()123456", b"                "];
+    for u in u_vec.iter() {
+        let chunk = le_bytes_to_u128(*u);
+        assert_eq!(check_decimal_bit_u128_optimal(chunk), check_decimal(*u));
+    }
+
+    let test_vec = vec![
+        b"1234567890123456",
+        b"0000000000000000",
+        b"9999999999999999",
+        b"1234567890abcdef",
+        b"abcdefghijklmnop",
+    ];
+
+    for u in test_vec.iter() {
+        let chunk = le_bytes_to_u128(*u);
+        assert_eq!(check_decimal_bit_u128_optimal(chunk), check_decimal(*u));
+    }
     }
 }
 

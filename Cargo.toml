@@ -1,6 +1,6 @@
 [package]
 name = "biscuit-converter"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Junbeom Lee <junbeoml22@gmail.com>"]
 description = "A decimal ASCII parser"
